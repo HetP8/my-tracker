@@ -3,84 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple Blockchain Tracker PoC</title>
+    <title>Ethical12 Supply Chain Tracker PoC</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Lighter gray background */
+        }
         .btn {
-            @apply bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-150 ease-in-out;
+            @apply bg-sky-600 hover:bg-sky-700 text-white font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5;
         }
         .btn-secondary {
-            @apply bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all duration-150 ease-in-out;
+            @apply bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2.5 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 ease-in-out transform hover:-translate-y-0.5;
         }
         .input-field {
-            @apply mt-1 block w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm shadow-sm placeholder-slate-400
-                   focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500
+            @apply mt-1 block w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm shadow-sm placeholder-slate-400
+                   focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500
                    disabled:bg-slate-50 disabled:text-slate-500 disabled:border-slate-200 disabled:shadow-none;
         }
         .card {
-            @apply bg-white shadow-xl rounded-lg p-6 mb-6;
+            @apply bg-white shadow-2xl rounded-xl p-6 sm:p-8 mb-8; /* Increased shadow and padding */
         }
         .history-item {
-            @apply border-b border-gray-200 py-3;
+            @apply border-b border-gray-200 py-3.5;
         }
         .history-item:last-child {
             @apply border-b-0;
         }
         #messageBox {
-            @apply fixed top-5 right-5 p-4 rounded-lg shadow-lg text-white z-50;
+            @apply fixed top-6 right-6 p-4 rounded-xl shadow-xl text-white z-[100] text-sm;
         }
-        .message-success { @apply bg-green-500; }
-        .message-error { @apply bg-red-500; }
-        .message-info { @apply bg-blue-500; }
+        .message-success { @apply bg-green-600; }
+        .message-error { @apply bg-red-700; } /* Darker red for errors */
+        .message-info { @apply bg-blue-600; }
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 </head>
-<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col items-center pt-10 pb-20 px-4">
+<body class="text-slate-800 min-h-screen flex flex-col items-center pt-8 sm:pt-12 pb-20 px-4">
 
-    <div id="messageBox" class="hidden"></div>
+    <div id="messageBox" class="hidden opacity-0 transition-opacity duration-300"></div>
 
-    <div class="w-full max-w-2xl">
-        <header class="text-center mb-10">
-            <h1 class="text-4xl font-bold text-sky-600">Supply Chain Tracker PoC</h1>
-            <p class="text-slate-600 mt-2">Track items on the Sepolia Testnet</p>
+    <div class="w-full max-w-3xl">
+        <header class="text-center mb-10 sm:mb-12">
+            <h1 class="text-4xl sm:text-5xl font-bold text-sky-700">Ethical Supply Chain Tracker</h1>
+            <p class="text-slate-600 mt-3 text-base sm:text-lg">A Proof-of-Concept for Transparent & Verifiable Sourcing</p>
         </header>
 
+        <div class="card" id="welcomeSection">
+            <h2 class="text-2xl sm:text-3xl font-semibold mb-4 text-sky-700">Welcome to the Tracker!</h2>
+            <div class="space-y-3 text-slate-700 text-sm sm:text-base">
+                <p>
+                    This platform demonstrates how blockchain technology can bring transparency and trust to supply chains.
+                    It's designed to track products like cocoa, coffee, diamonds, and textiles, ensuring they meet ethical sourcing standards.
+                </p>
+                <p><strong class="font-semibold">How it Works:</strong></p>
+                <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li><strong>Registration:</strong> A unique Batch ID for a set of products is registered on the blockchain with its initial location or status.</li>
+                    <li><strong>Tracking Updates:</strong> As the batch moves through the supply chain (e.g., from farm to processor to retailer), each step can be recorded as a new "scan" or update, linked to its Batch ID.</li>
+                    <li><strong>Immutable Record:</strong> Each transaction (registration or update) is permanently stored on the blockchain, making it tamper-proof and verifiable by anyone with access.</li>
+                    <li><strong>Verification:</strong> Consumers and companies can look up a Batch ID to see its complete journey, verifying its origin and ethical compliance.</li>
+                </ul>
+                <p><strong class="font-semibold">For Prospective Clients:</strong></p>
+                <p>
+                    Imagine your customers being able to scan a QR code on a product and instantly see its entire ethical journey, from source to shelf. This PoC showcases the core backend functionality.
+                    A full implementation would involve:
+                </p>
+                 <ul class="list-disc list-inside ml-4 space-y-1">
+                    <li>Integration with your existing inventory and logistics systems.</li>
+                    <li>User-friendly interfaces for all stakeholders (farmers, auditors, brands, consumers).</li>
+                    <li>Robust security measures and potentially private or permissioned blockchain solutions for sensitive data.</li>
+                    <li>QR code generation and scanning capabilities.</li>
+                </ul>
+                <p>This demo uses the <strong class="font-semibold">Sepolia Testnet</strong> (a test version of Ethereum), so all transactions are free and for demonstration purposes only.</p>
+            </div>
+        </div>
+
         <div class="card" id="connectCard">
-            <h2 class="text-2xl font-semibold mb-4 text-sky-700">Connect Wallet</h2>
+            <h2 class="text-2xl font-semibold mb-4 text-sky-700">1. Connect Your Wallet</h2>
+            <p class="text-sm text-slate-500 mb-5">Please connect your MetaMask wallet and ensure you are on the Sepolia Testnet.</p>
             <button id="connectButton" class="btn w-full">Connect to MetaMask</button>
-            <p id="connectionStatus" class="mt-3 text-sm text-center"></p>
+            <p id="connectionStatus" class="mt-4 text-sm text-center text-slate-600">Not Connected.</p>
         </div>
 
-        <div class="card hidden" id="actionsCard">
-            <h2 class="text-2xl font-semibold mb-2 text-sky-700">Register or Update Batch</h2>
-            <p class="text-sm text-slate-500 mb-6">Ensure you are connected to the Sepolia Testnet.</p>
+        <div class="grid md:grid-cols-2 md:gap-8">
+            <div class="card hidden" id="actionsCard">
+                <h2 class="text-2xl font-semibold mb-2 text-sky-700">2. Register or Update</h2>
+                <p class="text-sm text-slate-500 mb-6">Enter batch details below.</p>
 
-            <div>
-                <label for="batchId" class="block text-sm font-medium text-slate-700">Batch ID:</label>
-                <input type="text" id="batchId" name="batchId" class="input-field" placeholder="e.g., COFFEE-XYZ-001">
+                <div>
+                    <label for="batchId" class="block text-sm font-medium text-slate-700">Batch ID:</label>
+                    <input type="text" id="batchId" name="batchId" class="input-field" placeholder="e.g., COCOA-GH-001">
+                </div>
+
+                <div class="mt-4">
+                    <label for="location" class="block text-sm font-medium text-slate-700">Location/Details:</label>
+                    <input type="text" id="location" name="location" class="input-field" placeholder="e.g., Origin: Ashanti Region or Port of Tema Scan">
+                </div>
+
+                <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                    <button id="registerButton" class="btn flex-1">Register New Batch</button>
+                    <button id="updateButton" class="btn-secondary flex-1">Add Tracking Update</button>
+                </div>
             </div>
 
-            <div class="mt-4">
-                <label for="location" class="block text-sm font-medium text-slate-700">Location/Details:</label>
-                <input type="text" id="location" name="location" class="input-field" placeholder="e.g., Farm Origin: Nyeri, Kenya or Warehouse A Scan">
-            </div>
-
-            <div class="mt-6 flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
-                <button id="registerButton" class="btn flex-1">Register New Batch</button>
-                <button id="updateButton" class="btn-secondary flex-1">Add Tracking Update</button>
-            </div>
+            <div class="card hidden" id="lookupCard">
+                 <h2 class="text-2xl font-semibold mb-2 text-sky-700">3. View Batch History</h2>
+                 <p class="text-sm text-slate-500 mb-6">Look up a specific Batch ID to view its journey.</p>
+                <div>
+                    <label for="viewBatchId" class="block text-sm font-medium text-slate-700">Batch ID to View:</label>
+                    <input type="text" id="viewBatchId" name="viewBatchId" class="input-field" placeholder="Enter Batch ID">
+                </div>
+                <button id="viewHistoryButton" class="btn mt-5 w-full">View History</button>
+                </div>
         </div>
 
-        <div class="card hidden" id="historyCard">
-            <h2 class="text-2xl font-semibold mb-4 text-sky-700">View Batch History</h2>
-            <div>
-                <label for="viewBatchId" class="block text-sm font-medium text-slate-700">Batch ID to View:</label>
-                <input type="text" id="viewBatchId" name="viewBatchId" class="input-field" placeholder="Enter Batch ID">
-            </div>
-            <button id="viewHistoryButton" class="btn mt-4 w-full">View History</button>
 
-            <div id="historyOutput" class="mt-6">
+        <div class="card hidden" id="historyDisplayCard">
+            <h2 class="text-2xl font-semibold mb-4 text-sky-700">Batch Journey</h2>
+            <div id="historyOutput" class="mt-2">
                 <p class="text-slate-500 italic">Enter a Batch ID and click "View History" to see tracking details.</p>
             </div>
         </div>
@@ -88,7 +130,10 @@
 
     <script>
         // --- Configuration ---
-        const contractAddress = '0xDA0bab807633f07f013f94DD0E6A4F96F8742B53'; // PASTE YOUR DEPLOYED CONTRACT ADDRESS
+        // CRITICAL: Replace with your DEPLOYED TrackerV2.sol contract address from Remix after deployment to Sepolia
+        const contractAddress = '0x5860449fccedaf109f7a0c3a7c9cfaa696fe7ccf'; // <--- PASTE YOUR ACTUAL DEPLOYED CONTRACT ADDRESS HERE
+        // CRITICAL: This ABI should be an EXACT COPY from Remix for the TrackerV2.sol that includes getAllBatchIds
+        // even if getAllBatchIds is not used by this version of the JS.
         const contractABI = `[
 	{
 		"inputs": [
@@ -100,11 +145,6 @@
 			{
 				"internalType": "string",
 				"name": "_newLocation",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_nickname",
 				"type": "string"
 			}
 		],
@@ -126,12 +166,6 @@
 				"indexed": false,
 				"internalType": "string",
 				"name": "newLocation",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "nickname",
 				"type": "string"
 			},
 			{
@@ -167,12 +201,6 @@
 			},
 			{
 				"indexed": false,
-				"internalType": "string",
-				"name": "nickname",
-				"type": "string"
-			},
-			{
-				"indexed": false,
 				"internalType": "uint256",
 				"name": "timestamp",
 				"type": "uint256"
@@ -197,11 +225,6 @@
 			{
 				"internalType": "string",
 				"name": "_initialLocation",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_nickname",
 				"type": "string"
 			}
 		],
@@ -239,11 +262,6 @@
 				"internalType": "address",
 				"name": "actor",
 				"type": "address"
-			},
-			{
-				"internalType": "string",
-				"name": "nickname",
-				"type": "string"
 			}
 		],
 		"stateMutability": "view",
@@ -288,11 +306,6 @@
 						"internalType": "address",
 						"name": "actor",
 						"type": "address"
-					},
-					{
-						"internalType": "string",
-						"name": "nickname",
-						"type": "string"
 					}
 				],
 				"internalType": "struct TrackerV2.TrackingEvent[]",
@@ -321,39 +334,23 @@
 		],
 		"stateMutability": "view",
 		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"name": "isBatchIdRegistered",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
 	}
-]`; // PASTE YOUR CONTRACT ABI (JSON)
+]`;
+        // Note: The `batchHistory` mapping itself is not included in the ABI as a callable function,
+        // but its structure influences the `getBatchHistory` output.
 
         // --- Global Variables ---
         let provider;
         let signer;
-        let contract;
+        let contract; 
         let userAccount;
-
+        
         // --- DOM Elements ---
         const connectButton = document.getElementById('connectButton');
         const connectionStatus = document.getElementById('connectionStatus');
         const actionsCard = document.getElementById('actionsCard');
-        const historyCard = document.getElementById('historyCard');
+        const lookupCard = document.getElementById('lookupCard');
+        const historyDisplayCard = document.getElementById('historyDisplayCard');
 
         const batchIdInput = document.getElementById('batchId');
         const locationInput = document.getElementById('location');
@@ -367,11 +364,10 @@
 
         // --- Functions ---
 
-        // Function to display messages
         function showMessage(text, type = 'info', duration = 5000) {
             messageBox.textContent = text;
-            messageBox.className = ''; // Clear existing classes
-            messageBox.classList.add('fixed', 'top-5', 'right-5', 'p-4', 'rounded-lg', 'shadow-lg', 'text-white', 'z-50', 'transition-opacity', 'duration-300');
+            messageBox.className = '';
+            messageBox.classList.add('fixed', 'top-6', 'right-6', 'p-4', 'rounded-xl', 'shadow-xl', 'text-white', 'z-[100]', 'text-sm', 'transition-opacity', 'duration-300');
             if (type === 'success') messageBox.classList.add('message-success');
             else if (type === 'error') messageBox.classList.add('message-error');
             else messageBox.classList.add('message-info');
@@ -382,44 +378,46 @@
             setTimeout(() => {
                 messageBox.classList.remove('opacity-100');
                 messageBox.classList.add('opacity-0');
-                setTimeout(() => messageBox.classList.add('hidden'), 300); // Hide after fade out
+                setTimeout(() => messageBox.classList.add('hidden'), 300);
             }, duration);
         }
 
-        // Connect to MetaMask
         async function connectWallet() {
+            console.log("Attempting to connect wallet...");
+            console.log("Using Contract Address:", contractAddress);
+            // console.log("Using Contract ABI:", JSON.stringify(JSON.parse(contractABI), null, 2)); // Pretty print ABI for debug
+
             if (typeof window.ethereum !== 'undefined') {
                 try {
-                    // Request account access
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     userAccount = accounts[0];
+                    console.log("User account:", userAccount);
 
-                    // Initialize Ethers provider and signer
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
-
-                    // Create contract instance
                     contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
+                    console.log("Contract instance created:", contract.address);
+
 
                     connectionStatus.textContent = `Connected: ${userAccount.substring(0, 6)}...${userAccount.substring(userAccount.length - 4)}`;
-                    connectButton.textContent = 'Connected';
+                    connectionStatus.classList.add('text-green-600', 'font-semibold');
+                    connectButton.textContent = 'Wallet Connected';
                     connectButton.disabled = true;
-                    connectButton.classList.replace('bg-blue-500', 'bg-gray-400');
-                    connectButton.classList.remove('hover:bg-blue-700');
-
+                    connectButton.classList.replace('bg-sky-600', 'bg-slate-400');
+                    connectButton.classList.remove('hover:bg-sky-700');
 
                     actionsCard.classList.remove('hidden');
-                    historyCard.classList.remove('hidden');
+                    lookupCard.classList.remove('hidden');
+                    historyDisplayCard.classList.remove('hidden');
                     showMessage('Wallet connected successfully!', 'success');
 
-                    // Listen for account changes
                     window.ethereum.on('accountsChanged', handleAccountsChanged);
-                    // Listen for network changes
                     window.ethereum.on('chainChanged', handleChainChanged);
 
                 } catch (error) {
-                    console.error("User denied account access or error:", error);
+                    console.error("Error connecting wallet:", error);
                     connectionStatus.textContent = 'Connection failed. Please try again.';
+                    connectionStatus.classList.remove('text-green-600', 'font-semibold');
                     showMessage(`Connection Error: ${error.message || 'User denied access.'}`, 'error');
                 }
             } else {
@@ -431,13 +429,11 @@
 
         function handleAccountsChanged(accounts) {
             if (accounts.length === 0) {
-                // MetaMask is locked or the user has disconnected all accounts
                 showMessage('Wallet disconnected. Please connect MetaMask.', 'info');
                 resetUI();
             } else {
                 userAccount = accounts[0];
                 connectionStatus.textContent = `Connected: ${userAccount.substring(0, 6)}...${userAccount.substring(userAccount.length - 4)}`;
-                 // Re-initialize signer and contract with the new account
                 if (provider) {
                     signer = provider.getSigner();
                     contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
@@ -447,20 +443,20 @@
         }
 
         function handleChainChanged(_chainId) {
-            // Reload the page to ensure correct network context, or prompt user to switch
             showMessage('Network changed. Please ensure you are on Sepolia Testnet and refresh if needed.', 'info');
-            // For simplicity, we can reload. For a better UX, you might check if _chainId is Sepolia.
             window.location.reload();
         }
 
         function resetUI() {
             connectButton.textContent = 'Connect to MetaMask';
             connectButton.disabled = false;
-            connectButton.classList.replace('bg-gray-400','bg-blue-500');
-            connectButton.classList.add('hover:bg-blue-700');
+            connectButton.classList.replace('bg-slate-400','bg-sky-600');
+            connectButton.classList.add('hover:bg-sky-700');
             connectionStatus.textContent = 'Not Connected. Click to connect.';
+            connectionStatus.classList.remove('text-green-600', 'font-semibold');
             actionsCard.classList.add('hidden');
-            historyCard.classList.add('hidden');
+            lookupCard.classList.add('hidden');
+            historyDisplayCard.classList.add('hidden');
             userAccount = null;
             provider = null;
             signer = null;
@@ -468,10 +464,9 @@
         }
 
 
-        // Register a new batch
         async function registerNewBatch() {
             if (!contract) {
-                showMessage('Please connect your wallet first.', 'error');
+                showMessage('Please connect your wallet first to register a batch.', 'error');
                 return;
             }
             const batchId = batchIdInput.value.trim();
@@ -485,8 +480,8 @@
             try {
                 showMessage('Sending transaction to register batch...', 'info');
                 const tx = await contract.registerBatch(batchId, initialLocation);
-                await tx.wait(); // Wait for the transaction to be mined
-                showMessage(`Batch "${batchId}" registered successfully! Tx: ${tx.hash.substring(0,10)}...`, 'success');
+                const receipt = await tx.wait();
+                showMessage(`Batch "${batchId}" registered successfully! Tx: ${receipt.transactionHash.substring(0,10)}...`, 'success');
                 batchIdInput.value = '';
                 locationInput.value = '';
             } catch (error) {
@@ -495,14 +490,13 @@
             }
         }
 
-        // Add a tracking update
         async function addBatchUpdate() {
             if (!contract) {
-                showMessage('Please connect your wallet first.', 'error');
+                showMessage('Please connect your wallet first to update a batch.', 'error');
                 return;
             }
-            const batchId = batchIdInput.value.trim(); // Use the same input for batch ID
-            const newLocation = locationInput.value.trim(); // Use the same input for location
+            const batchId = batchIdInput.value.trim();
+            const newLocation = locationInput.value.trim();
 
             if (!batchId || !newLocation) {
                 showMessage('Batch ID and New Location are required for an update.', 'error');
@@ -512,94 +506,91 @@
             try {
                 showMessage('Sending transaction to update batch location...', 'info');
                 const tx = await contract.addTrackingUpdate(batchId, newLocation);
-                await tx.wait();
-                showMessage(`Location for batch "${batchId}" updated! Tx: ${tx.hash.substring(0,10)}...`, 'success');
-                // Optionally clear inputs or just the location input
-                locationInput.value = ''; 
+                const receipt = await tx.wait();
+                showMessage(`Location for batch "${batchId}" updated! Tx: ${receipt.transactionHash.substring(0,10)}...`, 'success');
+                locationInput.value = '';
             } catch (error) {
                 console.error("Error updating batch:", error);
                 showMessage(`Error updating batch: ${error?.data?.message || error.message || 'Transaction failed.'}`, 'error');
             }
         }
 
-        // View batch history
         async function viewHistory() {
-            // For viewing history, we can use a provider even if the user hasn't connected their *signer* wallet,
-            // but for this PoC, we'll assume they connect for all actions.
-            // If you want public read access without wallet connection, you'd set up a default provider (e.g. Infura).
-            if (!contract) { // We use the 'contract' instance which might be signed or read-only
-                 try {
-                    // Fallback to a read-only provider if no signer
-                    const readProvider = new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID`); // Replace with your Infura ID or use a public one
-                    // Or use MetaMask's provider if available, even without full connection for signing
-                    // const readProvider = window.ethereum ? new ethers.providers.Web3Provider(window.ethereum) : new ethers.providers.JsonRpcProvider(`https://sepolia.infura.io/v3/616a68f871d34fef87cdca658aaafb20`);
-                    const readContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), readProvider);
-
-                    const batchId = viewBatchIdInput.value.trim();
-                    if (!batchId) {
-                        showMessage('Please enter a Batch ID to view its history.', 'error');
-                        return;
-                    }
-
-                    historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
-                    const history = await readContract.getBatchHistory(batchId);
-
-                    if (history.length === 0) {
-                        historyOutput.innerHTML = `<p class="text-slate-600 font-semibold">No history found for Batch ID: ${batchId}</p>`;
-                    } else {
-                        let html = `<h3 class="text-lg font-semibold text-sky-600 mb-2">History for Batch ID: ${batchId}</h3>`;
-                        history.forEach((event, index) => {
-                            html += `
-                                <div class="history-item">
-                                    <p><strong>Event ${index + 1}:</strong> ${event.location}</p>
-                                    <p class="text-xs text-slate-500"><strong>Time:</strong> ${new Date(event.timestamp * 1000).toLocaleString()}</p>
-                                    <p class="text-xs text-slate-500"><strong>Recorded By:</strong> ${event.actor.substring(0,6)}...${event.actor.substring(event.actor.length - 4)}</p>
-                                </div>
-                            `;
-                        });
-                        historyOutput.innerHTML = html;
-                    }
-
-                } catch (error) {
-                     console.error("Error viewing history (read-only attempt):", error);
-                     showMessage(`Error viewing history: ${error.message || 'Could not fetch data.'}. Ensure Batch ID is correct.`, 'error');
-                     historyOutput.innerHTML = `<p class="text-red-500">Error fetching history. Ensure Batch ID is correct and network is stable.</p>`;
-                }
-                return;
-            }
-
-
-            // If wallet is connected (contract instance with signer exists)
             const batchId = viewBatchIdInput.value.trim();
             if (!batchId) {
                 showMessage('Please enter a Batch ID to view its history.', 'error');
+                historyOutput.innerHTML = `<p class="text-slate-500 italic">Please enter a Batch ID.</p>`;
+                return;
+            }
+
+            historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
+            historyDisplayCard.classList.remove('hidden');
+
+            let contractToUse = contract; 
+            let tempProvider;
+
+            if (!contractToUse) {
+                try {
+                    console.log("Wallet not connected for viewHistory. Creating temporary read-only provider.");
+                    console.log("Using Contract Address for read-only:", contractAddress);
+                    tempProvider = new ethers.providers.JsonRpcProvider('https://rpc.sepolia.org');
+                    
+                    // Check if code exists at the address
+                    const code = await tempProvider.getCode(contractAddress);
+                    if (code === '0x' || code === '0x0') {
+                        console.error(`No contract code found at address ${contractAddress} on Sepolia.`);
+                        showMessage(`Error: No contract deployed at address ${contractAddress}. Please check the address.`, 'error');
+                        historyOutput.innerHTML = `<p class="text-red-500">Error: Contract not found at the specified address.</p>`;
+                        return;
+                    }
+                    console.log(`Contract code found at ${contractAddress}. Length: ${code.length}`);
+
+                    contractToUse = new ethers.Contract(contractAddress, JSON.parse(contractABI), tempProvider);
+                    console.log("Temporary read-only contract instance:", contractToUse.address);
+                    showMessage('Fetching history using a public node (read-only). Connect wallet to make transactions.', 'info', 3000);
+                } catch(e) {
+                    console.error("Error creating temporary read-only provider/contract or checking code:", e);
+                    showMessage('Could not connect to blockchain to fetch history. Please check network and contract address.', 'error');
+                    historyOutput.innerHTML = `<p class="text-red-500">Could not connect to blockchain (provider/contract error).</p>`;
+                    return;
+                }
+            }
+            
+            if (!contractToUse) { 
+                showMessage('Blockchain connection not available to fetch history.', 'error');
+                historyOutput.innerHTML = `<p class="text-red-500">Error: Blockchain connection not ready.</p>`;
+                return;
+            }
+            if (typeof contractToUse.getBatchHistory !== 'function') {
+                console.error("getBatchHistory function does not exist on the contract instance. THIS IS LIKELY AN ABI MISMATCH.", contractToUse);
+                showMessage("Critical Error: `getBatchHistory` function not found in ABI. Verify contract ABI and address.", "error");
+                historyOutput.innerHTML = '<p class="text-red-500 text-sm">Error: Contract function missing. Check ABI in JS and ensure it matches deployed contract. See console.</p>';
                 return;
             }
 
             try {
-                historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
-                // Use the existing 'contract' instance (which has a signer or provider)
-                const history = await contract.getBatchHistory(batchId);
-
+                console.log(`Calling getBatchHistory for Batch ID: "${batchId}" on contract: ${contractToUse.address}`);
+                const history = await contractToUse.getBatchHistory(batchId);
+                console.log("History received:", history);
                 if (history.length === 0) {
-                    historyOutput.innerHTML = `<p class="text-slate-600 font-semibold">No history found for Batch ID: ${batchId}</p>`;
+                    historyOutput.innerHTML = `<p class="text-slate-600 font-semibold">No history found for Batch ID: <span class="text-sky-700">${batchId}</span></p><p class="text-sm text-slate-500 mt-1">Ensure the Batch ID is correct and has been registered on the Sepolia network with the contract address: <span class="font-mono text-xs">${contractAddress}</span></p>`;
                 } else {
-                    let html = `<h3 class="text-lg font-semibold text-sky-600 mb-2">History for Batch ID: ${batchId}</h3>`;
+                    let html = `<h3 class="text-xl font-semibold text-sky-700 mb-3">Journey for Batch ID: ${batchId}</h3>`;
                     history.forEach((event, index) => {
                         html += `
                             <div class="history-item">
-                                <p><strong>Event ${index + 1}:</strong> ${event.location}</p>
-                                <p class="text-xs text-slate-500"><strong>Time:</strong> ${new Date(event.timestamp * 1000).toLocaleString()}</p>
-                                <p class="text-xs text-slate-500"><strong>Recorded By:</strong> ${event.actor.substring(0,6)}...${event.actor.substring(event.actor.length - 4)}</p>
+                                <p class="font-medium text-slate-700"><strong>${index === 0 ? 'Registered' : 'Update ' + index}:</strong> ${event.location}</p>
+                                <p class="text-xs text-slate-500 mt-1"><strong>Time:</strong> ${new Date(event.timestamp * 1000).toLocaleString()}</p>
+                                <p class="text-xs text-slate-500"><strong>Recorded By:</strong> <span class="font-mono">${event.actor}</span></p>
                             </div>
                         `;
                     });
                     historyOutput.innerHTML = html;
                 }
             } catch (error) {
-                console.error("Error viewing history:", error);
-                showMessage(`Error viewing history: ${error.message || 'Could not fetch data.'}`, 'error');
-                historyOutput.innerHTML = `<p class="text-red-500">Error fetching history. Ensure Batch ID is correct.</p>`;
+                console.error("Error during getBatchHistory call:", error); 
+                showMessage(`Error viewing history: ${error.message || 'Could not fetch data.'}. Ensure Batch ID is correct and registered.`, 'error');
+                historyOutput.innerHTML = `<p class="text-red-500">Error fetching history. Details: ${error.message}. Check Batch ID, contract address, ABI, and network. Also, ensure the batch ID exists if the contract requires it.</p>`;
             }
         }
 
@@ -609,20 +600,18 @@
         updateButton.addEventListener('click', addBatchUpdate);
         viewHistoryButton.addEventListener('click', viewHistory);
 
-        // Initial check if MetaMask is already connected (e.g., on page refresh)
-        // This is a simplified check; more robust solutions handle this better.
         window.addEventListener('load', async () => {
             if (window.ethereum && window.ethereum.selectedAddress) {
-                // If MetaMask was previously connected and still has a selected address
-                // You might want to automatically attempt to connect or update UI accordingly
-                // For this PoC, we'll require a click to connect to keep it simple.
-                connectionStatus.textContent = 'MetaMask detected. Click to connect.';
+                connectionStatus.textContent = 'MetaMask detected. Previously connected. Click to re-connect.';
             } else if (window.ethereum) {
-                 connectionStatus.textContent = 'MetaMask detected. Click to connect.';
-            }
-             else {
-                connectionStatus.textContent = 'MetaMask not detected. Please install it.';
+                 connectionStatus.textContent = 'MetaMask detected. Click "Connect Wallet" to begin.';
+            } else {
+                connectionStatus.textContent = 'MetaMask not detected. Please install MetaMask to use this DApp.';
                 connectButton.disabled = true;
+                connectButton.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            if (actionsCard.classList.contains('hidden')) { 
+                 historyDisplayCard.classList.add('hidden');
             }
         });
 
