@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethical Supply Chain Tracker PoC</title>
+    <title>Ethical12 Supply Chain Tracker PoC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -131,8 +131,9 @@
     <script>
         // --- Configuration ---
         // CRITICAL: Replace with your DEPLOYED TrackerV2.sol contract address from Remix after deployment to Sepolia
-        const contractAddress = '0xD7ACd2a9FD159E69Bb102A1ca21C9a3e3A5F771B'; // <--- PASTE YOUR ACTUAL DEPLOYED CONTRACT ADDRESS HERE
-        // CRITICAL: Ensure this ABI is an EXACT COPY from Remix for your deployed TrackerV2.sol
+        const contractAddress = '0x5860449fccedaf109f7a0c3a7c9cfaa696fe7ccf'; // <--- PASTE YOUR ACTUAL DEPLOYED CONTRACT ADDRESS HERE
+        // CRITICAL: This ABI should be an EXACT COPY from Remix for the TrackerV2.sol that includes getAllBatchIds
+        // even if getAllBatchIds is not used by this version of the JS.
         const contractABI = `[
 	{
 		"inputs": [
@@ -335,6 +336,8 @@
 		"type": "function"
 	}
 ]`;
+        // Note: The `batchHistory` mapping itself is not included in the ABI as a callable function,
+        // but its structure influences the `getBatchHistory` output.
 
         // --- Global Variables ---
         let provider;
@@ -382,7 +385,7 @@
         async function connectWallet() {
             console.log("Attempting to connect wallet...");
             console.log("Using Contract Address:", contractAddress);
-            // console.log("Using Contract ABI:", contractABI); // Can be very long, uncomment if needed for deep debug
+            // console.log("Using Contract ABI:", JSON.stringify(JSON.parse(contractABI), null, 2)); // Pretty print ABI for debug
 
             if (typeof window.ethereum !== 'undefined') {
                 try {
@@ -393,7 +396,7 @@
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
                     contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
-                    console.log("Contract instance created:", contract);
+                    console.log("Contract instance created:", contract.address);
 
 
                     connectionStatus.textContent = `Connected: ${userAccount.substring(0, 6)}...${userAccount.substring(userAccount.length - 4)}`;
@@ -524,20 +527,31 @@
             historyDisplayCard.classList.remove('hidden');
 
             let contractToUse = contract; 
+            let tempProvider;
 
             if (!contractToUse) {
                 try {
                     console.log("Wallet not connected for viewHistory. Creating temporary read-only provider.");
                     console.log("Using Contract Address for read-only:", contractAddress);
-                    // console.log("Using Contract ABI for read-only:", contractABI); // Can be very long
-                    const publicRpcProvider = new ethers.providers.JsonRpcProvider('https://rpc.sepolia.org'); // Ensure this RPC is reliable
-                    contractToUse = new ethers.Contract(contractAddress, JSON.parse(contractABI), publicRpcProvider);
-                    console.log("Temporary read-only contract instance:", contractToUse);
+                    tempProvider = new ethers.providers.JsonRpcProvider('https://rpc.sepolia.org');
+                    
+                    // Check if code exists at the address
+                    const code = await tempProvider.getCode(contractAddress);
+                    if (code === '0x' || code === '0x0') {
+                        console.error(`No contract code found at address ${contractAddress} on Sepolia.`);
+                        showMessage(`Error: No contract deployed at address ${contractAddress}. Please check the address.`, 'error');
+                        historyOutput.innerHTML = `<p class="text-red-500">Error: Contract not found at the specified address.</p>`;
+                        return;
+                    }
+                    console.log(`Contract code found at ${contractAddress}. Length: ${code.length}`);
+
+                    contractToUse = new ethers.Contract(contractAddress, JSON.parse(contractABI), tempProvider);
+                    console.log("Temporary read-only contract instance:", contractToUse.address);
                     showMessage('Fetching history using a public node (read-only). Connect wallet to make transactions.', 'info', 3000);
                 } catch(e) {
-                    console.error("Error creating temporary read-only provider for viewHistory:", e);
-                    showMessage('Could not connect to blockchain to fetch history. Please connect your wallet or check network.', 'error');
-                    historyOutput.innerHTML = `<p class="text-red-500">Could not connect to blockchain (provider error).</p>`;
+                    console.error("Error creating temporary read-only provider/contract or checking code:", e);
+                    showMessage('Could not connect to blockchain to fetch history. Please check network and contract address.', 'error');
+                    historyOutput.innerHTML = `<p class="text-red-500">Could not connect to blockchain (provider/contract error).</p>`;
                     return;
                 }
             }
@@ -548,12 +562,11 @@
                 return;
             }
             if (typeof contractToUse.getBatchHistory !== 'function') {
-                 console.error("getBatchHistory function does not exist on the contract instance. Check ABI and contract address.", contractToUse);
-                showMessage("Critical Error: `getBatchHistory` function not found. Verify contract ABI and address.", "error");
-                historyOutput.innerHTML = '<p class="text-red-500 text-sm">Error: Contract function missing. Check console.</p>';
+                console.error("getBatchHistory function does not exist on the contract instance. THIS IS LIKELY AN ABI MISMATCH.", contractToUse);
+                showMessage("Critical Error: `getBatchHistory` function not found in ABI. Verify contract ABI and address.", "error");
+                historyOutput.innerHTML = '<p class="text-red-500 text-sm">Error: Contract function missing. Check ABI in JS and ensure it matches deployed contract. See console.</p>';
                 return;
             }
-
 
             try {
                 console.log(`Calling getBatchHistory for Batch ID: "${batchId}" on contract: ${contractToUse.address}`);
@@ -575,9 +588,9 @@
                     historyOutput.innerHTML = html;
                 }
             } catch (error) {
-                console.error("Error viewing history:", error); // This is the line that would show your error
+                console.error("Error during getBatchHistory call:", error); 
                 showMessage(`Error viewing history: ${error.message || 'Could not fetch data.'}. Ensure Batch ID is correct and registered.`, 'error');
-                historyOutput.innerHTML = `<p class="text-red-500">Error fetching history. Details: ${error.message}. Check Batch ID, contract address, ABI, and network.</p>`;
+                historyOutput.innerHTML = `<p class="text-red-500">Error fetching history. Details: ${error.message}. Check Batch ID, contract address, ABI, and network. Also, ensure the batch ID exists if the contract requires it.</p>`;
             }
         }
 
