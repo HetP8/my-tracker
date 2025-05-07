@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced26 Blockchain Tracker PoC</title>
+    <title>Enhanced87 Blockchain Tracker PoC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
@@ -142,11 +142,26 @@
 
     <script>
         // --- Configuration ---
-        // Make sure this is your correct deployed TrackerV2 contract address
-        const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; // Use your actual deployed address
-        
-        // !!! IMPORTANT: Replace YOUR_NEW_CONTRACT_ABI_HERE with the fresh ABI from Remix !!!
+        const contractAddress = '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8'; // PASTE YOUR DEPLOYED TrackerV2 CONTRACT ADDRESS
         const contractABI = \`[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_batchId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_newLocation",
+				"type": "string"
+			}
+		],
+		"name": "addTrackingUpdate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"anonymous": false,
 		"inputs": [
@@ -218,11 +233,11 @@
 			},
 			{
 				"internalType": "string",
-				"name": "_newLocation",
+				"name": "_initialLocation",
 				"type": "string"
 			}
 		],
-		"name": "addTrackingUpdate",
+		"name": "registerBatch",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -347,26 +362,8 @@
 		],
 		"stateMutability": "view",
 		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_initialLocation",
-				"type": "string"
-			}
-		],
-		"name": "registerBatch",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	}
-]`; 
+]`; // PASTE YOUR TrackerV2 CONTRACT ABI (JSON)
 
         // --- Global Variables ---
         let provider;
@@ -375,7 +372,6 @@
         let userAccount;
 
         // --- DOM Elements ---
-        // These are defined globally. Ensure your HTML has these IDs.
         const connectButton = document.getElementById('connectButton');
         const connectionStatus = document.getElementById('connectionStatus');
         const mainAppInterface = document.getElementById('mainAppInterface');
@@ -394,19 +390,17 @@
         // --- Functions ---
 
         function showMessage(text, type = 'info', duration = 5000) {
-            if (!messageBox) {
-                console.error("showMessage: messageBox element not found.");
-                return; 
-            }
             messageBox.textContent = text;
             messageBox.className = 'fixed top-6 right-6 p-4 rounded-lg shadow-xl text-white z-[100] text-sm transition-all duration-300 ease-in-out transform opacity-0'; // Reset classes
-            
+
             if (type === 'success') messageBox.classList.add('message-success');
             else if (type === 'error') messageBox.classList.add('message-error');
             else messageBox.classList.add('message-info');
-            
-            void messageBox.offsetWidth; // Trigger reflow for transition
+
+            // Trigger reflow for transition
+            void messageBox.offsetWidth; 
             messageBox.classList.add('show');
+
 
             setTimeout(() => {
                 messageBox.classList.remove('show');
@@ -414,91 +408,39 @@
         }
 
         async function connectWallet() {
-            if (!connectButton) {
-                console.error("connectWallet: connectButton element not found.");
-                return; 
-            }
-
-            // Prevent re-execution if already connected or button is disabled for other reasons
-            if (connectButton.disabled && connectButton.textContent === 'Wallet Connected') {
-                 console.log("Wallet already connected and initialized.");
-                 return; 
-            }
-            // If button is disabled but not because it's connected (e.g. MetaMask not detected initially)
-            if (connectButton.disabled && connectButton.textContent !== 'Wallet Connected') {
-                 console.log("Connect button is disabled. Ensure MetaMask is installed and refresh if needed.");
-                 if (typeof window.ethereum === 'undefined') { // Double check MetaMask presence
-                    showMessage('MetaMask not detected. Please install MetaMask and refresh.', 'error');
-                    return;
-                 }
-            }
-
             if (typeof window.ethereum !== 'undefined') {
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     userAccount = accounts[0];
-                    
+
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
-                    
-                    let parsedABI;
-                    try {
-                        // CRITICAL: Check if contractABI is the placeholder. If so, don't try to parse.
-                        if (contractABI === 'YOUR_NEW_CONTRACT_ABI_HERE' || !contractABI || !contractABI.trim().startsWith('[')) {
-                            console.error("Contract ABI is a placeholder or invalid. Please paste the correct ABI into the HTML script.");
-                            showMessage("CRITICAL ERROR: Contract ABI is not set correctly in the code. Please update it.", "error");
-                            if(connectButton) { // Keep button disabled or re-disable if it was somehow enabled
-                                connectButton.disabled = true;
-                                connectButton.classList.remove('btn-primary');
-                                connectButton.classList.add('btn-disabled');
-                            }
-                            return; // Stop execution if ABI is not valid
-                        }
-                        parsedABI = JSON.parse(contractABI);
-                    } catch (e) {
-                        console.error("Failed to parse Contract ABI. Ensure it's valid JSON:", e);
-                        showMessage("CRITICAL ERROR: Contract ABI is invalid (JSON parse failed). Check console and HTML.", "error");
-                        if(connectButton) {
-                            connectButton.disabled = true;
-                            connectButton.classList.remove('btn-primary');
-                            connectButton.classList.add('btn-disabled');
-                        }
-                        return; // Stop execution
-                    }
-                    contract = new ethers.Contract(contractAddress, parsedABI, signer);
-                    
-                    if (connectionStatus) connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
-                    if (connectButton) {
-                        connectButton.textContent = 'Wallet Connected';
-                        connectButton.disabled = true;
-                        connectButton.classList.remove('btn-primary');
-                        connectButton.classList.add('btn-disabled');
-                    }
-                    
-                    const connectCard = document.getElementById('connectCard');
-                    if (connectCard) connectCard.classList.add('hidden');
-                    if (mainAppInterface) mainAppInterface.classList.remove('hidden');
-                    
+                    contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
+
+                    connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
+                    connectButton.textContent = 'Wallet Connected';
+                    connectButton.disabled = true;
+                    connectButton.classList.remove('btn-primary');
+                    connectButton.classList.add('btn-disabled');
+
+                    document.getElementById('connectCard').classList.add('hidden');
+                    mainAppInterface.classList.remove('hidden');
                     showMessage('Wallet connected successfully!', 'success');
 
-                    await fetchAllBatchIds(); 
+                    await fetchAllBatchIds(); // Fetch all batch IDs on connect
 
                     window.ethereum.on('accountsChanged', handleAccountsChanged);
                     window.ethereum.on('chainChanged', handleChainChanged);
 
                 } catch (error) {
-                    console.error("User denied account access or error during connectWallet:", error);
-                    if (connectionStatus) connectionStatus.textContent = 'Connection failed. Please try again.';
+                    console.error("User denied account access or error:", error);
+                    connectionStatus.textContent = 'Connection failed. Please try again.';
                     showMessage(\`Connection Error: \${error.message || 'User denied access.'}\`, 'error');
                 }
             } else {
-                if (connectionStatus) connectionStatus.textContent = 'MetaMask is not installed. Please install it to use this app.';
-                showMessage('MetaMask not detected. Please install MetaMask and refresh.', 'error');
-                if (connectButton) {
-                    connectButton.disabled = true; 
-                    connectButton.classList.remove('btn-primary');
-                    connectButton.classList.add('btn-disabled');
-                }
+                connectionStatus.textContent = 'MetaMask is not installed. Please install it to use this app.';
+                showMessage('MetaMask not detected. Please install MetaMask.', 'error');
+                connectButton.disabled = true;
             }
         }
 
@@ -508,26 +450,13 @@
                 resetUI();
             } else {
                 userAccount = accounts[0];
-                if (connectionStatus) connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
+                connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
                 if (provider) {
                     signer = provider.getSigner();
-                    let parsedABI;
-                    try {
-                        if (contractABI === 'YOUR_NEW_CONTRACT_ABI_HERE' || !contractABI || !contractABI.trim().startsWith('[')) {
-                             console.error("Contract ABI is a placeholder or invalid during accountsChanged.");
-                             showMessage("CRITICAL ERROR: Contract ABI is a placeholder or invalid.", "error");
-                             return;
-                        }
-                        parsedABI = JSON.parse(contractABI);
-                    } catch (e) {
-                        console.error("Failed to parse Contract ABI during accountsChanged:", e);
-                        showMessage("CRITICAL ERROR: Contract ABI is invalid. Check console.", "error");
-                        return;
-                    }
-                    contract = new ethers.Contract(contractAddress, parsedABI, signer);
+                    contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
                 }
                 showMessage('Account changed.', 'info');
-                fetchAllBatchIds(); 
+                fetchAllBatchIds(); // Re-fetch batch IDs if account changes
             }
         }
 
@@ -535,19 +464,15 @@
             showMessage('Network changed. Please ensure you are on Sepolia Testnet and refresh if needed.', 'info');
             window.location.reload();
         }
-        
+
         function resetUI() {
-            if (connectButton) {
-                connectButton.textContent = 'Connect to MetaMask';
-                connectButton.disabled = false;
-                connectButton.classList.add('btn-primary');
-                connectButton.classList.remove('btn-disabled');
-            }
-            if (connectionStatus) connectionStatus.textContent = 'Please connect to the Sepolia Testnet.';
-            if (mainAppInterface) mainAppInterface.classList.add('hidden');
-            const connectCard = document.getElementById('connectCard');
-            if (connectCard) connectCard.classList.remove('hidden');
-            
+            connectButton.textContent = 'Connect to MetaMask';
+            connectButton.disabled = false;
+            connectButton.classList.add('btn-primary');
+            connectButton.classList.remove('btn-disabled');
+            connectionStatus.textContent = 'Please connect to the Sepolia Testnet.';
+            mainAppInterface.classList.add('hidden');
+            document.getElementById('connectCard').classList.remove('hidden');
             userAccount = null;
             provider = null;
             signer = null;
@@ -555,116 +480,106 @@
         }
 
         async function registerNewBatch() {
-            if (!contract) { showMessage('Please connect your wallet first, and ensure ABI is correct.', 'error'); return; }
-            const currentBatchId = batchIdInput ? batchIdInput.value.trim() : "";
-            const currentInitialLocation = locationInput ? locationInput.value.trim() : "";
+            if (!contract) { showMessage('Please connect your wallet first.', 'error'); return; }
+            const batchId = batchIdInput.value.trim();
+            const initialLocation = locationInput.value.trim();
 
-            if (!currentBatchId || !currentInitialLocation) { showMessage('Batch ID and Initial Location are required.', 'error'); return; }
+            if (!batchId || !initialLocation) { showMessage('Batch ID and Initial Location are required.', 'error'); return; }
 
-            if (registerButton) {
-                registerButton.disabled = true;
-                registerButton.textContent = 'Registering...';
-            }
+            registerButton.disabled = true;
+            registerButton.textContent = 'Registering...';
             try {
                 showMessage('Sending transaction to register batch...', 'info');
-                const tx = await contract.registerBatch(currentBatchId, currentInitialLocation);
+                const tx = await contract.registerBatch(batchId, initialLocation);
                 await tx.wait();
-                showMessage(\`Batch "\${currentBatchId}" registered successfully! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
-                if (batchIdInput) batchIdInput.value = '';
-                if (locationInput) locationInput.value = '';
-                await fetchAllBatchIds(); 
+                showMessage(\`Batch "\${batchId}" registered successfully! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
+                batchIdInput.value = '';
+                locationInput.value = '';
+                await fetchAllBatchIds(); // Refresh the list of batch IDs
             } catch (error) {
                 console.error("Error registering batch:", error);
-                let errMsg = error?.data?.message || error?.error?.message || error.message || 'Transaction failed.';
-                if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg); // Handle complex error objects
+                let errMsg = error?.data?.message || error.message || 'Transaction failed.';
                 if (errMsg.includes("Batch ID already exists")) errMsg = "This Batch ID has already been registered.";
                 showMessage(\`Error: \${errMsg}\`, 'error');
             } finally {
-                if (registerButton) {
-                    registerButton.disabled = false;
-                    registerButton.textContent = 'Register New Batch';
-                }
+                registerButton.disabled = false;
+                registerButton.textContent = 'Register New Batch';
             }
         }
 
         async function addBatchUpdate() {
-            if (!contract) { showMessage('Please connect your wallet first, and ensure ABI is correct.', 'error'); return; }
-            const currentBatchId = batchIdInput ? batchIdInput.value.trim() : "";
-            const currentNewLocation = locationInput ? locationInput.value.trim() : "";
+            if (!contract) { showMessage('Please connect your wallet first.', 'error'); return; }
+            const batchId = batchIdInput.value.trim();
+            const newLocation = locationInput.value.trim();
 
-            if (!currentBatchId || !currentNewLocation) { showMessage('Batch ID and New Location are required for an update.', 'error'); return; }
-            
-            if (updateButton) {
-                updateButton.disabled = true;
-                updateButton.textContent = 'Updating...';
-            }
+            if (!batchId || !newLocation) { showMessage('Batch ID and New Location are required for an update.', 'error'); return; }
+
+            updateButton.disabled = true;
+            updateButton.textContent = 'Updating...';
             try {
                 showMessage('Sending transaction to update batch location...', 'info');
-                const tx = await contract.addTrackingUpdate(currentBatchId, currentNewLocation);
+                const tx = await contract.addTrackingUpdate(batchId, newLocation);
                 await tx.wait();
-                showMessage(\`Location for batch "\${currentBatchId}" updated! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
-                if (locationInput) locationInput.value = ''; 
-                if (viewBatchIdInput && viewBatchIdInput.value.trim() === currentBatchId) {
+                showMessage(\`Location for batch "\${batchId}" updated! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
+                locationInput.value = ''; 
+                // If the updated batchId is the one in viewBatchIdInput, refresh its history
+                if (viewBatchIdInput.value.trim() === batchId) {
                     await viewHistory();
                 }
             } catch (error) {
                 console.error("Error updating batch:", error);
-                let errMsg = error?.data?.message || error?.error?.message || error.message || 'Transaction failed.';
-                if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
+                 let errMsg = error?.data?.message || error.message || 'Transaction failed.';
                 if (errMsg.includes("Batch ID not found")) errMsg = "Batch ID not found. Register it first.";
                 showMessage(\`Error: \${errMsg}\`, 'error');
             } finally {
-                if (updateButton) {
-                    updateButton.disabled = false;
-                    updateButton.textContent = 'Add Tracking Update';
-                }
+                updateButton.disabled = false;
+                updateButton.textContent = 'Add Tracking Update';
             }
         }
-        
+
         async function fetchAllBatchIds() {
-            let tempContract = contract;
-            if (!tempContract) {
+            if (!contract && !provider) { // Need at least a provider for read-only
                  try {
-                    // IMPORTANT: Replace YOUR_INFURA_PROJECT_ID with your actual Infura Project ID for read-only access if desired
-                    const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); 
-                    let parsedABI;
-                    try {
-                        if (contractABI === 'YOUR_NEW_CONTRACT_ABI_HERE' || !contractABI || !contractABI.trim().startsWith('[')) {
-                             console.error("Contract ABI is a placeholder or invalid during fetchAllBatchIds.");
-                             if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">CRITICAL ERROR: ABI not set.</p>';
-                             return;
-                        }
-                        parsedABI = JSON.parse(contractABI);
-                    } catch (e) {
-                        console.error("Failed to parse Contract ABI during fetchAllBatchIds (read-only):", e);
-                        if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">CRITICAL ERROR: ABI invalid (JSON).</p>';
-                        return;
-                    }
-                    tempContract = new ethers.Contract(contractAddress, parsedABI, readProvider);
+                    // Attempt to create a read-only provider if wallet not fully connected
+                    const tempProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
+                    const tempContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), tempProvider);
+                    const ids = await tempContract.getAllBatchIds();
+                    displayAllBatchIds(ids);
                 } catch(e) {
-                    if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Could not load batch IDs. Connect wallet or check console for provider errors.</p>';
-                    console.error("Error creating read-only provider for fetchAllBatchIds:", e);
-                    return;
+                    allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Could not load batch IDs. Connect wallet or check console.</p>';
+                    console.error("Error fetching all batch IDs (read-only):", e);
                 }
+                return;
+            }
+             if (!contract && provider) { // If provider exists but contract (with signer) doesn't, use provider
+                const readContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), provider);
+                 try {
+                    const ids = await readContract.getAllBatchIds();
+                    displayAllBatchIds(ids);
+                } catch (e) {
+                    allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Error loading batch IDs. Check console.</p>';
+                    console.error("Error fetching all batch IDs (provider only):", e);
+                }
+                return;
             }
 
+
             try {
-                if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">Loading batch IDs...</p>';
-                const ids = await tempContract.getAllBatchIds(); 
+                allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">Loading batch IDs...</p>';
+                const ids = await contract.getAllBatchIds(); // Uses contract with signer if available
                 displayAllBatchIds(ids);
             } catch (error) {
-                console.error("Error fetching all batch IDs from contract:", error);
-                if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Failed to load batch IDs. Ensure wallet is connected to Sepolia and contract is deployed.</p>';
+                console.error("Error fetching all batch IDs:", error);
+                allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Failed to load batch IDs. Ensure your wallet is connected to Sepolia.</p>';
             }
         }
 
         function displayAllBatchIds(ids) {
-            if (!allBatchIdsList) { console.error("displayAllBatchIds: allBatchIdsList element not found."); return; }
-            if (!ids || ids.length === 0) { 
+            if (ids.length === 0) {
                 allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">No batches registered yet.</p>';
                 return;
             }
-            allBatchIdsList.innerHTML = ''; 
+            allBatchIdsList.innerHTML = ''; // Clear previous list
             const ul = document.createElement('ul');
             ul.className = 'space-y-1';
             ids.forEach(id => {
@@ -673,10 +588,11 @@
                 button.textContent = id;
                 button.className = 'batch-id-list-item';
                 button.onclick = () => {
-                    if (viewBatchIdInput) viewBatchIdInput.value = id;
+                    viewBatchIdInput.value = id;
                     viewHistory();
-                    const historyOutputEl = document.getElementById('historyOutput');
-                    if (historyOutputEl) historyOutputEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    // Scroll to history section for better UX on mobile
+                    document.getElementById('historyOutput').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
                 };
                 li.appendChild(button);
                 ul.appendChild(li);
@@ -684,52 +600,39 @@
             allBatchIdsList.appendChild(ul);
         }
 
-        async function viewHistory() {
-            let currentReaderContract = contract; 
-            const currentViewBatchId = viewBatchIdInput ? viewBatchIdInput.value.trim() : "";
 
-            if (!currentViewBatchId) {
+        async function viewHistory() {
+            let currentContract = contract; // The one with signer if connected
+            let batchIdToView = viewBatchIdInput.value.trim();
+
+            if (!batchIdToView) {
                 showMessage('Please enter a Batch ID to view its history.', 'error');
                 return;
             }
-            
-            if (historyOutput) historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
-            else { console.error("viewHistory: historyOutput element not found."); return; }
 
+            historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
 
-            if (!currentReaderContract) {
+            // If not connected via signer, try read-only
+            if (!currentContract) {
                 try {
-                    // IMPORTANT: Replace YOUR_INFURA_PROJECT_ID for read-only access
-                    const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); 
-                    let parsedABI;
-                    try {
-                        if (contractABI === 'YOUR_NEW_CONTRACT_ABI_HERE' || !contractABI || !contractABI.trim().startsWith('[')) {
-                             console.error("Contract ABI is a placeholder or invalid during viewHistory.");
-                             if (historyOutput) historyOutput.innerHTML = '<p class="text-red-500">CRITICAL ERROR: ABI not set.</p>';
-                             return;
-                        }
-                        parsedABI = JSON.parse(contractABI);
-                    } catch (e) {
-                        console.error("Failed to parse Contract ABI during viewHistory (read-only):", e);
-                        if (historyOutput) historyOutput.innerHTML = '<p class="text-red-500">CRITICAL ERROR: ABI invalid (JSON).</p>';
-                        return;
-                    }
-                    currentReaderContract = new ethers.Contract(contractAddress, parsedABI, readProvider);
+                    // Use a public RPC or user's Infura ID if available
+                    const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
+                    currentContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), readProvider);
                 } catch (e) {
-                    console.error("Error creating read-only provider for viewHistory:", e);
+                    console.error("Error creating read-only provider:", e);
                     showMessage('Cannot view history. Wallet not connected and no fallback provider configured.', 'error');
-                    if (historyOutput) historyOutput.innerHTML = '<p class="text-red-500">Error: Wallet not connected and no fallback provider (or provider error).</p>';
+                    historyOutput.innerHTML = '<p class="text-red-500">Error: Wallet not connected and no fallback provider.</p>';
                     return;
                 }
             }
 
             try {
-                const history = await currentReaderContract.getBatchHistory(currentViewBatchId);
-                
-                if (!history || history.length === 0) { 
-                    historyOutput.innerHTML = \`<p class="text-slate-600 font-semibold">No history found for Batch ID: \${currentViewBatchId}</p>\`;
+                const history = await currentContract.getBatchHistory(batchIdToView);
+
+                if (history.length === 0) {
+                    historyOutput.innerHTML = \`<p class="text-slate-600 font-semibold">No history found for Batch ID: \${batchIdToView}</p>\`;
                 } else {
-                    let html = \`<h3 class="text-xl font-semibold text-sky-600 mb-3">History for Batch ID: \${currentViewBatchId}</h3>\`;
+                    let html = \`<h3 class="text-xl font-semibold text-sky-600 mb-3">History for Batch ID: \${batchIdToView}</h3>\`;
                     history.forEach((event, index) => {
                         html += \`
                             <div class="history-item">
@@ -742,108 +645,33 @@
                     historyOutput.innerHTML = html;
                 }
             } catch (error) {
-                console.error("Error viewing history from contract:", error);
+                console.error("Error viewing history:", error);
                 showMessage(\`Error viewing history: \${error.message || 'Could not fetch data.'}\`, 'error');
-                if (historyOutput) historyOutput.innerHTML = \`<p class="text-red-500">Error fetching history for "\${currentViewBatchId}". Ensure Batch ID is correct and registered.</p>\`;
+                historyOutput.innerHTML = \`<p class="text-red-500">Error fetching history for "\${batchIdToView}". Ensure Batch ID is correct and registered.</p>\`;
             }
         }
 
         // --- Event Listeners ---
-        if (connectButton) {
-            connectButton.addEventListener('click', connectWallet);
-        } else {
-            // This console error will appear if the script runs before the button is in the DOM.
-            // The window.addEventListener('load', ...) below is designed to handle initial setup.
-            console.error("DOM Element 'connectButton' not found during initial script execution for event listener attachment. Will retry on load.");
-        }
-        // It's good practice to ensure elements exist before adding listeners,
-        // though for elements defined directly in HTML, they should be available unless script is in <head> without defer.
-        if (registerButton) registerButton.addEventListener('click', registerNewBatch);
-        else console.error("DOM Element 'registerButton' not found.");
-        
-        if (updateButton) updateButton.addEventListener('click', addBatchUpdate);
-        else console.error("DOM Element 'updateButton' not found.");
+        connectButton.addEventListener('click', connectWallet);
+        registerButton.addEventListener('click', registerNewBatch);
+        updateButton.addEventListener('click', addBatchUpdate);
+        viewHistoryButton.addEventListener('click', viewHistory);
 
-        if (viewHistoryButton) viewHistoryButton.addEventListener('click', viewHistory);
-        else console.error("DOM Element 'viewHistoryButton' not found.");
-
-
-        window.addEventListener('load', () => {
-            // Re-fetch critical elements here to ensure DOM is ready
-            const localConnectButton = document.getElementById('connectButton');
-            const localConnectionStatus = document.getElementById('connectionStatus');
-
-            // If connectButton was not found earlier for event listener, try attaching it now.
-            if (localConnectButton && !localConnectButton.hasAttribute('data-listener-attached')) {
-                 localConnectButton.addEventListener('click', connectWallet);
-                 localConnectButton.setAttribute('data-listener-attached', 'true');
+        window.addEventListener('load', async () => {
+            if (window.ethereum && window.ethereum.selectedAddress) {
+                connectionStatus.textContent = 'MetaMask detected. Click button above to connect.';
+                // Optionally, you could try to auto-connect here if desired, but manual connect is often better UX first time.
+                // await connectWallet(); 
+            } else if (window.ethereum) {
+                 connectionStatus.textContent = 'MetaMask detected. Click button above to connect.';
+            } else {
+               connectionStatus.textContent = 'MetaMask not detected. Please install it to use this app.';
+               connectButton.disabled = true;
+               connectButton.classList.remove('btn-primary');
+               connectButton.classList.add('btn-disabled');
             }
-
-
-            setTimeout(() => {
-                // Ensure elements are re-fetched or checked again if initial global consts might be stale
-                const currentConnectButton = document.getElementById('connectButton');
-                const currentConnectionStatus = document.getElementById('connectionStatus');
-
-
-                if (!currentConnectButton || !currentConnectionStatus) {
-                    console.error("Connect button or status element not found during final load event timeout. HTML structure might be incorrect or IDs missing.");
-                    const body = document.querySelector('body');
-                    if (body && !body.querySelector('#critical-error-message')) {
-                        const errorDiv = document.createElement('div');
-                        errorDiv.id = 'critical-error-message';
-                        errorDiv.innerHTML = '<p style="color: red; background: white; padding: 10px; text-align: center; font-weight: bold;">Critical Error: Core UI elements (connect button/status) are missing. Please check the HTML IDs.</p>';
-                        body.prepend(errorDiv);
-                    }
-                    return; 
-                }
-
-                if (window.ethereum) {
-                    currentConnectionStatus.textContent = 'MetaMask detected. Click the button above to connect.';
-                    if (window.ethereum.selectedAddress && window.ethereum.isConnected()) {
-                        currentConnectionStatus.innerHTML = \`MetaMask detected. Previously connected as <span class="font-semibold">\${window.ethereum.selectedAddress.substring(0, 6)}...\${window.ethereum.selectedAddress.substring(window.ethereum.selectedAddress.length - 4)}</span>. Click to re-initialize if needed.\`;
-                    }
-                    currentConnectButton.disabled = false; 
-                    currentConnectButton.classList.add('btn-primary');
-                    currentConnectButton.classList.remove('btn-disabled');
-                } else {
-                    currentConnectionStatus.textContent = 'MetaMask not detected. Please install MetaMask and refresh the page.';
-                    currentConnectButton.disabled = true; 
-                    currentConnectButton.classList.remove('btn-primary');
-                    currentConnectButton.classList.add('btn-disabled');
-                    if (!document.body.dataset.metaMaskErrorShown) { // Prevent multiple popups
-                        showMessage('MetaMask not detected. Please install it and refresh.', 'error');
-                        document.body.dataset.metaMaskErrorShown = "true"; 
-                    }
-                }
-            }, 500); // 500ms delay for MetaMask injection
         });
+
     </script>
 </body>
 </html>
-```
-
-**Key changes in this version of the `<script>` block:**
-
-* **`contractABI` Placeholder:** The line `const contractABI = \`YOUR_NEW_CONTRACT_ABI_HERE\`;` is definitely set to the placeholder.
-* **Robust ABI Checks:** The JavaScript functions (`connectWallet`, `handleAccountsChanged`, `fetchAllBatchIds`, `viewHistory`) now have more explicit checks to see if `contractABI` is still the placeholder or an obviously invalid string (e.g., doesn't start with `[`). If it's invalid, it will show a "CRITICAL ERROR" message to the user and log it to the console, preventing further operations that would fail.
-* **DOM Element Null Checks:** Added more checks (e.g., `if (!messageBox) return;`) at the beginning of functions that manipulate DOM elements to prevent errors if those elements are somehow not found.
-* **Error Message for Missing Core UI:** The `window.addEventListener('load', ...)` function now tries to display a more prominent error if the `connectButton` or `connectionStatus` elements themselves are missing from the HTML.
-* **Infura Project ID Placeholder:** Remember to replace `YOUR_INFURA_PROJECT_ID` in `fetchAllBatchIds` and `viewHistory` if you want read-only functionality without a user's wallet connected.
-
-**Instructions:**
-
-1.  **Replace your entire `index.html`** with the code above.
-2.  **Carefully copy the ABI** for your `TrackerV2.sol` contract from Remix.
-3.  **Paste this ABI** directly between the backticks, replacing `YOUR_NEW_CONTRACT_ABI_HERE`. Ensure no extra characters are introduced.
-    ```javascript
-    const contractABI = \`[{"inputs": ..., "type": "function"}, ...]\`; // Your pasted ABI goes here
-    ```
-4.  **Save the `index.html` file.**
-5.  **Hard refresh** your browser page (`Ctrl+Shift+R` or `Cmd+Shift+R`).
-6.  **Open the developer console (F12).**
-    * If you still see "Uncaught SyntaxError: Invalid or unexpected token" and it points to the `contractABI` line, the issue is 100% with the characters you are pasting for the ABI. Try pasting it into a plain text editor first, cleaning it, and then pasting it into the HTML.
-    * If you see "CRITICAL ERROR: Contract ABI is not set correctly..." from the `showMessage` function, it means you haven't replaced the placeholder, or what you pasted isn't recognized as a valid start to an ABI.
-    * If there are no syntax errors and no critical ABI errors, try clicking "Connect to MetaMask."
-
-This should give you the cleanest slate for pasting the A
