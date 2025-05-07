@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced33 Blockchain Tracker PoC</title>
+    <title>Enhanced34 Blockchain Tracker PoC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
@@ -142,8 +142,8 @@
 
     <script>
         // --- Configuration ---
-        const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; // PASTE YOUR DEPLOYED TrackerV2 CONTRACT ADDRESS
-        const contractABI = `[
+        const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; // This is from your file, ensure it's correct
+        const contractABI = \`[
 	{
 		"inputs": [
 			{
@@ -363,7 +363,7 @@
 		"stateMutability": "view",
 		"type": "function"
 	}
-]`; // PASTE YOUR TrackerV2 CONTRACT ABI (JSON)
+]\`; // This is from your file, ensure it's correct
 
         // --- Global Variables ---
         let provider;
@@ -387,20 +387,18 @@
         const historyOutput = document.getElementById('historyOutput');
         const messageBox = document.getElementById('messageBox');
 
-        // --- Functions ---
+        // --- Functions --- (showMessage, connectWallet, handleAccountsChanged, handleChainChanged, resetUI, registerNewBatch, addBatchUpdate, fetchAllBatchIds, displayAllBatchIds, viewHistory - these should all be the same as the previous correct version)
 
         function showMessage(text, type = 'info', duration = 5000) {
             messageBox.textContent = text;
             messageBox.className = 'fixed top-6 right-6 p-4 rounded-lg shadow-xl text-white z-[100] text-sm transition-all duration-300 ease-in-out transform opacity-0'; // Reset classes
-
+            
             if (type === 'success') messageBox.classList.add('message-success');
             else if (type === 'error') messageBox.classList.add('message-error');
             else messageBox.classList.add('message-info');
-
-            // Trigger reflow for transition
+            
             void messageBox.offsetWidth; 
             messageBox.classList.add('show');
-
 
             setTimeout(() => {
                 messageBox.classList.remove('show');
@@ -408,39 +406,66 @@
         }
 
         async function connectWallet() {
+            // Check if the button is already disabled (e.g. from a previous failed attempt or if already connected)
+            // This check was slightly different in the uploaded file, ensure it matches this logic
+            if (connectButton.disabled && connectButton.textContent === 'Wallet Connected') {
+                 console.log("Wallet already connected and initialized.");
+                 return; // Already connected
+            }
+            if (connectButton.disabled && connectButton.textContent !== 'Wallet Connected') {
+                 console.log("Connect button is disabled, likely due to MetaMask not being detected initially.");
+                 // Optionally, re-check for MetaMask here if desired, or rely on user refresh
+                 if (typeof window.ethereum === 'undefined') {
+                    showMessage('MetaMask not detected. Please install MetaMask and refresh.', 'error');
+                    return;
+                 }
+            }
+
+
             if (typeof window.ethereum !== 'undefined') {
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     userAccount = accounts[0];
-
+                    
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
-                    contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
-
+                    // Ensure ABI is parsed correctly
+                    let parsedABI;
+                    try {
+                        parsedABI = JSON.parse(contractABI);
+                    } catch (e) {
+                        console.error("Failed to parse Contract ABI:", e);
+                        showMessage("Critical Error: Contract ABI is invalid. Check console.", "error");
+                        return;
+                    }
+                    contract = new ethers.Contract(contractAddress, parsedABI, signer);
+                    
                     connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
                     connectButton.textContent = 'Wallet Connected';
                     connectButton.disabled = true;
                     connectButton.classList.remove('btn-primary');
                     connectButton.classList.add('btn-disabled');
-
+                    
                     document.getElementById('connectCard').classList.add('hidden');
                     mainAppInterface.classList.remove('hidden');
                     showMessage('Wallet connected successfully!', 'success');
 
-                    await fetchAllBatchIds(); // Fetch all batch IDs on connect
+                    await fetchAllBatchIds(); 
 
                     window.ethereum.on('accountsChanged', handleAccountsChanged);
                     window.ethereum.on('chainChanged', handleChainChanged);
 
                 } catch (error) {
-                    console.error("User denied account access or error:", error);
+                    console.error("User denied account access or error during connectWallet:", error);
                     connectionStatus.textContent = 'Connection failed. Please try again.';
                     showMessage(\`Connection Error: \${error.message || 'User denied access.'}\`, 'error');
                 }
             } else {
                 connectionStatus.textContent = 'MetaMask is not installed. Please install it to use this app.';
-                showMessage('MetaMask not detected. Please install MetaMask.', 'error');
-                connectButton.disabled = true;
+                showMessage('MetaMask not detected. Please install MetaMask and refresh.', 'error');
+                connectButton.disabled = true; 
+                connectButton.classList.remove('btn-primary');
+                connectButton.classList.add('btn-disabled');
             }
         }
 
@@ -453,10 +478,19 @@
                 connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
                 if (provider) {
                     signer = provider.getSigner();
-                    contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
+                    // Ensure ABI is parsed correctly
+                    let parsedABI;
+                    try {
+                        parsedABI = JSON.parse(contractABI);
+                    } catch (e) {
+                        console.error("Failed to parse Contract ABI during accountsChanged:", e);
+                        showMessage("Critical Error: Contract ABI is invalid. Check console.", "error");
+                        return;
+                    }
+                    contract = new ethers.Contract(contractAddress, parsedABI, signer);
                 }
                 showMessage('Account changed.', 'info');
-                fetchAllBatchIds(); // Re-fetch batch IDs if account changes
+                fetchAllBatchIds(); 
             }
         }
 
@@ -464,7 +498,7 @@
             showMessage('Network changed. Please ensure you are on Sepolia Testnet and refresh if needed.', 'info');
             window.location.reload();
         }
-
+        
         function resetUI() {
             connectButton.textContent = 'Connect to MetaMask';
             connectButton.disabled = false;
@@ -495,10 +529,11 @@
                 showMessage(\`Batch "\${batchId}" registered successfully! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
                 batchIdInput.value = '';
                 locationInput.value = '';
-                await fetchAllBatchIds(); // Refresh the list of batch IDs
+                await fetchAllBatchIds(); 
             } catch (error) {
                 console.error("Error registering batch:", error);
-                let errMsg = error?.data?.message || error.message || 'Transaction failed.';
+                let errMsg = error?.data?.message || error?.error?.message || error.message || 'Transaction failed.';
+                if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
                 if (errMsg.includes("Batch ID already exists")) errMsg = "This Batch ID has already been registered.";
                 showMessage(\`Error: \${errMsg}\`, 'error');
             } finally {
@@ -513,7 +548,7 @@
             const newLocation = locationInput.value.trim();
 
             if (!batchId || !newLocation) { showMessage('Batch ID and New Location are required for an update.', 'error'); return; }
-
+            
             updateButton.disabled = true;
             updateButton.textContent = 'Updating...';
             try {
@@ -522,13 +557,13 @@
                 await tx.wait();
                 showMessage(\`Location for batch "\${batchId}" updated! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
                 locationInput.value = ''; 
-                // If the updated batchId is the one in viewBatchIdInput, refresh its history
                 if (viewBatchIdInput.value.trim() === batchId) {
                     await viewHistory();
                 }
             } catch (error) {
                 console.error("Error updating batch:", error);
-                 let errMsg = error?.data?.message || error.message || 'Transaction failed.';
+                let errMsg = error?.data?.message || error?.error?.message || error.message || 'Transaction failed.';
+                if (typeof errMsg === 'object') errMsg = JSON.stringify(errMsg);
                 if (errMsg.includes("Batch ID not found")) errMsg = "Batch ID not found. Register it first.";
                 showMessage(\`Error: \${errMsg}\`, 'error');
             } finally {
@@ -536,37 +571,32 @@
                 updateButton.textContent = 'Add Tracking Update';
             }
         }
-
+        
         async function fetchAllBatchIds() {
-            if (!contract && !provider) { // Need at least a provider for read-only
+            let tempContract = contract;
+            if (!tempContract) {
                  try {
-                    // Attempt to create a read-only provider if wallet not fully connected
-                    const tempProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
-                    const tempContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), tempProvider);
-                    const ids = await tempContract.getAllBatchIds();
-                    displayAllBatchIds(ids);
+                    const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
+                    // Ensure ABI is parsed correctly
+                    let parsedABI;
+                    try {
+                        parsedABI = JSON.parse(contractABI);
+                    } catch (e) {
+                        console.error("Failed to parse Contract ABI during fetchAllBatchIds (read-only):", e);
+                        allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Critical Error: ABI invalid.</p>';
+                        return;
+                    }
+                    tempContract = new ethers.Contract(contractAddress, parsedABI, readProvider);
                 } catch(e) {
                     allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Could not load batch IDs. Connect wallet or check console.</p>';
-                    console.error("Error fetching all batch IDs (read-only):", e);
+                    console.error("Error creating read-only provider for fetchAllBatchIds:", e);
+                    return;
                 }
-                return;
             }
-             if (!contract && provider) { // If provider exists but contract (with signer) doesn't, use provider
-                const readContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), provider);
-                 try {
-                    const ids = await readContract.getAllBatchIds();
-                    displayAllBatchIds(ids);
-                } catch (e) {
-                    allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Error loading batch IDs. Check console.</p>';
-                    console.error("Error fetching all batch IDs (provider only):", e);
-                }
-                return;
-            }
-
 
             try {
                 allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">Loading batch IDs...</p>';
-                const ids = await contract.getAllBatchIds(); // Uses contract with signer if available
+                const ids = await tempContract.getAllBatchIds(); 
                 displayAllBatchIds(ids);
             } catch (error) {
                 console.error("Error fetching all batch IDs:", error);
@@ -575,11 +605,11 @@
         }
 
         function displayAllBatchIds(ids) {
-            if (ids.length === 0) {
+            if (!ids || ids.length === 0) { // Added !ids check
                 allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">No batches registered yet.</p>';
                 return;
             }
-            allBatchIdsList.innerHTML = ''; // Clear previous list
+            allBatchIdsList.innerHTML = ''; 
             const ul = document.createElement('ul');
             ul.className = 'space-y-1';
             ids.forEach(id => {
@@ -590,9 +620,7 @@
                 button.onclick = () => {
                     viewBatchIdInput.value = id;
                     viewHistory();
-                    // Scroll to history section for better UX on mobile
                     document.getElementById('historyOutput').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
                 };
                 li.appendChild(button);
                 ul.appendChild(li);
@@ -600,26 +628,32 @@
             allBatchIdsList.appendChild(ul);
         }
 
-
         async function viewHistory() {
-            let currentContract = contract; // The one with signer if connected
+            let currentReaderContract = contract; 
             let batchIdToView = viewBatchIdInput.value.trim();
 
             if (!batchIdToView) {
                 showMessage('Please enter a Batch ID to view its history.', 'error');
                 return;
             }
-
+            
             historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
 
-            // If not connected via signer, try read-only
-            if (!currentContract) {
+            if (!currentReaderContract) {
                 try {
-                    // Use a public RPC or user's Infura ID if available
                     const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
-                    currentContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), readProvider);
+                    // Ensure ABI is parsed correctly
+                    let parsedABI;
+                    try {
+                        parsedABI = JSON.parse(contractABI);
+                    } catch (e) {
+                        console.error("Failed to parse Contract ABI during viewHistory (read-only):", e);
+                        historyOutput.innerHTML = '<p class="text-red-500">Critical Error: ABI invalid.</p>';
+                        return;
+                    }
+                    currentReaderContract = new ethers.Contract(contractAddress, parsedABI, readProvider);
                 } catch (e) {
-                    console.error("Error creating read-only provider:", e);
+                    console.error("Error creating read-only provider for viewHistory:", e);
                     showMessage('Cannot view history. Wallet not connected and no fallback provider configured.', 'error');
                     historyOutput.innerHTML = '<p class="text-red-500">Error: Wallet not connected and no fallback provider.</p>';
                     return;
@@ -627,9 +661,9 @@
             }
 
             try {
-                const history = await currentContract.getBatchHistory(batchIdToView);
-
-                if (history.length === 0) {
+                const history = await currentReaderContract.getBatchHistory(batchIdToView);
+                
+                if (!history || history.length === 0) { // Added !history check
                     historyOutput.innerHTML = \`<p class="text-slate-600 font-semibold">No history found for Batch ID: \${batchIdToView}</p>\`;
                 } else {
                     let html = \`<h3 class="text-xl font-semibold text-sky-600 mb-3">History for Batch ID: \${batchIdToView}</h3>\`;
@@ -652,26 +686,53 @@
         }
 
         // --- Event Listeners ---
-        connectButton.addEventListener('click', connectWallet);
-        registerButton.addEventListener('click', registerNewBatch);
-        updateButton.addEventListener('click', addBatchUpdate);
-        viewHistoryButton.addEventListener('click', viewHistory);
+        // Ensure connectButton is not null before adding listener
+        if (connectButton) {
+            connectButton.addEventListener('click', connectWallet);
+        } else {
+            console.error("Connect button not found on page load for event listener attachment.");
+        }
+        // Same for other buttons if needed, though less likely to be null if HTML structure is correct
+        if (registerButton) registerButton.addEventListener('click', registerNewBatch);
+        if (updateButton) updateButton.addEventListener('click', addBatchUpdate);
+        if (viewHistoryButton) viewHistoryButton.addEventListener('click', viewHistory);
 
-        window.addEventListener('load', async () => {
-            if (window.ethereum && window.ethereum.selectedAddress) {
-                connectionStatus.textContent = 'MetaMask detected. Click button above to connect.';
-                // Optionally, you could try to auto-connect here if desired, but manual connect is often better UX first time.
-                // await connectWallet(); 
-            } else if (window.ethereum) {
-                 connectionStatus.textContent = 'MetaMask detected. Click button above to connect.';
-            } else {
-               connectionStatus.textContent = 'MetaMask not detected. Please install it to use this app.';
-               connectButton.disabled = true;
-               connectButton.classList.remove('btn-primary');
-               connectButton.classList.add('btn-disabled');
-            }
+
+        // ***** THIS IS THE CRITICAL BLOCK TO UPDATE *****
+        window.addEventListener('load', () => {
+            // Give MetaMask a brief moment to inject window.ethereum
+            setTimeout(() => {
+                const localConnectButton = document.getElementById('connectButton'); // Re-fetch inside timeout
+                const localConnectionStatus = document.getElementById('connectionStatus'); // Re-fetch
+
+                if (!localConnectButton || !localConnectionStatus) {
+                    console.error("Connect button or status element not found during load event. HTML might not be fully parsed.");
+                    return; 
+                }
+
+                if (window.ethereum) {
+                    localConnectionStatus.textContent = 'MetaMask detected. Click the button above to connect.';
+                    if (window.ethereum.selectedAddress && window.ethereum.isConnected()) {
+                        localConnectionStatus.innerHTML = \`MetaMask detected. Previously connected as <span class="font-semibold">\${window.ethereum.selectedAddress.substring(0, 6)}...\${window.ethereum.selectedAddress.substring(window.ethereum.selectedAddress.length - 4)}</span>. Click to re-initialize if needed.\`;
+                    }
+                    localConnectButton.disabled = false; 
+                    localConnectButton.classList.add('btn-primary');
+                    localConnectButton.classList.remove('btn-disabled');
+                } else {
+                    localConnectionStatus.textContent = 'MetaMask not detected. Please install MetaMask and refresh the page.';
+                    localConnectButton.disabled = true; 
+                    localConnectButton.classList.remove('btn-primary');
+                    localConnectButton.classList.add('btn-disabled');
+                    // Only show error message if it hasn't been shown already for this
+                    if (!document.body.dataset.metaMaskErrorShown) {
+                        showMessage('MetaMask not detected. Please install it and refresh.', 'error');
+                        document.body.dataset.metaMaskErrorShown = "true"; 
+                    }
+                }
+            }, 500); // Wait 500ms for MetaMask to inject
         });
 
     </script>
 </body>
 </html>
+
