@@ -145,6 +145,24 @@
         const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; // PASTE YOUR DEPLOYED TrackerV2 CONTRACT ADDRESS
         const contractABI = \`[
 	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_batchId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_newLocation",
+				"type": "string"
+			}
+		],
+		"name": "addTrackingUpdate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -215,11 +233,11 @@
 			},
 			{
 				"internalType": "string",
-				"name": "_newLocation",
+				"name": "_initialLocation",
 				"type": "string"
 			}
 		],
-		"name": "addTrackingUpdate",
+		"name": "registerBatch",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -343,24 +361,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_initialLocation",
-				"type": "string"
-			}
-		],
-		"name": "registerBatch",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]`; // PASTE YOUR TrackerV2 CONTRACT ABI (JSON)
