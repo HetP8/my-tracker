@@ -116,7 +116,7 @@
 
             <div class="card hidden" id="lookupCard">
                  <h2 class="text-2xl font-semibold mb-2 text-sky-700">3. View Batch History</h2>
-                 <p class="text-sm text-slate-500 mb-6">Look up a specific Batch ID or select from the list below (if available).</p>
+                 <p class="text-sm text-slate-500 mb-6">Look up a specific Batch ID or select from the list below.</p>
                 <div>
                     <label for="viewBatchId" class="block text-sm font-medium text-slate-700">Batch ID to View:</label>
                     <input type="text" id="viewBatchId" name="viewBatchId" class="input-field" placeholder="Enter Batch ID">
@@ -124,9 +124,9 @@
                 <button id="viewHistoryButton" class="btn mt-5 w-full">View History</button>
 
                 <div id="previousBatchIdsSection" class="mt-6 hidden">
-                    <h3 class="text-lg font-semibold text-sky-600 mb-3">Previously Registered IDs (This Session):</h3>
+                    <h3 class="text-lg font-semibold text-sky-600 mb-3">All Registered Batch IDs:</h3>
                     <div id="previousBatchIdsList" class="max-h-48 overflow-y-auto bg-slate-100 p-3 rounded-md">
-                        <p class="text-slate-500 italic text-sm">No batches registered yet in this session.</p>
+                        <p class="text-slate-500 italic text-sm">Loading Batch IDs from blockchain...</p>
                     </div>
                 </div>
             </div>
@@ -143,8 +143,9 @@
 
     <script>
         // --- Configuration ---
-        // IMPORTANT: Replace with your deployed contract address and ABI
+        // IMPORTANT: Replace with your deployed contract address
         const contractAddress = '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8'; // PASTE YOUR DEPLOYED TrackerV2.sol CONTRACT ADDRESS
+        // IMPORTANT: Ensure this ABI matches your deployed TrackerV2.sol, including the getAllBatchIds function
         const contractABI = `[
 	{
 		"anonymous": false,
@@ -372,14 +373,14 @@
         let signer;
         let contract;
         let userAccount;
-        let localBatchIds = []; // For demo purposes: stores batch IDs registered in this session
+        let fetchedBatchIds = []; // Stores batch IDs fetched from the blockchain
 
         // --- DOM Elements ---
         const connectButton = document.getElementById('connectButton');
         const connectionStatus = document.getElementById('connectionStatus');
         const actionsCard = document.getElementById('actionsCard');
-        const lookupCard = document.getElementById('lookupCard'); // Renamed from historyCard
-        const historyDisplayCard = document.getElementById('historyDisplayCard'); // New card for displaying history output
+        const lookupCard = document.getElementById('lookupCard');
+        const historyDisplayCard = document.getElementById('historyDisplayCard');
 
         const batchIdInput = document.getElementById('batchId');
         const locationInput = document.getElementById('location');
@@ -397,10 +398,9 @@
 
         // --- Functions ---
 
-        // Function to display messages
         function showMessage(text, type = 'info', duration = 5000) {
             messageBox.textContent = text;
-            messageBox.className = ''; // Clear existing classes
+            messageBox.className = '';
             messageBox.classList.add('fixed', 'top-6', 'right-6', 'p-4', 'rounded-xl', 'shadow-xl', 'text-white', 'z-[100]', 'text-sm', 'transition-opacity', 'duration-300');
             if (type === 'success') messageBox.classList.add('message-success');
             else if (type === 'error') messageBox.classList.add('message-error');
@@ -416,7 +416,6 @@
             }, duration);
         }
 
-        // Connect to MetaMask
         async function connectWallet() {
             if (typeof window.ethereum !== 'undefined') {
                 try {
@@ -436,11 +435,10 @@
 
                     actionsCard.classList.remove('hidden');
                     lookupCard.classList.remove('hidden');
-                    historyDisplayCard.classList.remove('hidden'); // Show the history display card area
+                    historyDisplayCard.classList.remove('hidden');
                     showMessage('Wallet connected successfully!', 'success');
 
-                    // Attempt to load all batch IDs (placeholder for now)
-                    await loadAndDisplayAllBatchIds();
+                    await loadAndDisplayAllBatchIds(); // Load batch IDs from blockchain
 
                     window.ethereum.on('accountsChanged', handleAccountsChanged);
                     window.ethereum.on('chainChanged', handleChainChanged);
@@ -470,7 +468,7 @@
                     contract = new ethers.Contract(contractAddress, JSON.parse(contractABI), signer);
                 }
                 showMessage('Account changed.', 'info');
-                loadAndDisplayAllBatchIds(); // Reload batch IDs for the new account context if necessary
+                loadAndDisplayAllBatchIds();
             }
         }
 
@@ -491,52 +489,59 @@
             historyDisplayCard.classList.add('hidden');
             previousBatchIdsSection.classList.add('hidden');
             previousBatchIdsList.innerHTML = '<p class="text-slate-500 italic text-sm">No batches registered yet in this session.</p>';
-            localBatchIds = [];
+            fetchedBatchIds = [];
             userAccount = null;
             provider = null;
             signer = null;
             contract = null;
         }
 
-        // Load and display all batch IDs (placeholder/local implementation)
+        // Load and display all batch IDs from the blockchain
         async function loadAndDisplayAllBatchIds() {
-            if (!contract) {
-                // If using a read-only provider for this, initialize it here.
-                // For this PoC, we only populate from localBatchIds or a future contract.getAllBatchIds()
-                // showMessage('Connect wallet to see registered batch IDs.', 'info');
-                // return;
+            // Determine the contract instance to use (signed or read-only)
+            let contractToUse = contract;
+            if (!contractToUse) {
+                try {
+                    const readProvider = new ethers.providers.JsonRpcProvider('https://rpc.sepolia.org');
+                    contractToUse = new ethers.Contract(contractAddress, JSON.parse(contractABI), readProvider);
+                    // showMessage('Fetching batch ID list using a public node.', 'info', 2000);
+                } catch (e) {
+                    console.error("Error creating read-only provider for batch list:", e);
+                    showMessage('Could not connect to blockchain to fetch batch ID list.', 'error');
+                    previousBatchIdsList.innerHTML = '<p class="text-red-500 text-sm">Error fetching batch ID list.</p>';
+                    previousBatchIdsSection.classList.remove('hidden');
+                    return;
+                }
             }
 
-            // --- Blockchain Implementation (Requires Smart Contract Update) ---
-            // TODO: Uncomment and adapt this section when your smart contract has `getAllBatchIds()`
-            /*
+            if (!contractToUse || typeof contractToUse.getAllBatchIds !== 'function') {
+                console.warn("getAllBatchIds function not found in ABI or contract not initialized.");
+                previousBatchIdsList.innerHTML = '<p class="text-slate-500 italic text-sm">Contract function to list all Batch IDs is not available. Please check contract ABI and deployment.</p>';
+                previousBatchIdsSection.classList.remove('hidden'); // Show the section with the message
+                return;
+            }
+
             try {
-                if (contract && typeof contract.getAllBatchIds === 'function') {
-                    const ids = await contract.getAllBatchIds(); // Assuming this function exists and returns string[]
-                    localBatchIds = [...new Set(ids)]; // Ensure unique IDs
-                    updatePreviousBatchIdsList();
-                } else {
-                    console.warn("contract.getAllBatchIds function not found in ABI. Using local session data only.");
-                    // Fallback to local session data if the function isn't available
-                    updatePreviousBatchIdsList();
-                }
+                previousBatchIdsList.innerHTML = '<p class="text-slate-500 italic text-sm">Loading Batch IDs from blockchain...</p>';
+                previousBatchIdsSection.classList.remove('hidden');
+
+                const ids = await contractToUse.getAllBatchIds();
+                fetchedBatchIds = [...new Set(ids)]; // Ensure unique IDs
+                updatePreviousBatchIdsListDOM();
             } catch (error) {
                 console.error("Error fetching all batch IDs:", error);
-                showMessage("Could not load list of all batch IDs from blockchain.", "error");
-                // Still update with local list as a fallback
-                updatePreviousBatchIdsList();
+                showMessage("Could not load list of all batch IDs from blockchain. Ensure the contract is deployed and has this function.", "error");
+                previousBatchIdsList.innerHTML = '<p class="text-red-500 text-sm">Failed to load Batch IDs. Check console.</p>';
             }
-            */
-
-            // For now, just update based on `localBatchIds` (populated during this session)
-            updatePreviousBatchIdsList();
         }
 
-
-        function updatePreviousBatchIdsList() {
-            if (localBatchIds.length > 0) {
+        // Updates the DOM with the fetchedBatchIds
+        function updatePreviousBatchIdsListDOM() {
+            previousBatchIdsSection.classList.remove('hidden'); // Ensure section is visible
+            if (fetchedBatchIds.length > 0) {
                 previousBatchIdsList.innerHTML = ''; // Clear existing
-                localBatchIds.forEach(id => {
+                fetchedBatchIds.forEach(id => {
+                    if (!id || id.trim() === "") return; // Skip empty IDs
                     const listItem = document.createElement('div');
                     listItem.textContent = id;
                     listItem.classList.add('batch-id-list-item');
@@ -546,16 +551,11 @@
                     };
                     previousBatchIdsList.appendChild(listItem);
                 });
-                previousBatchIdsSection.classList.remove('hidden');
             } else {
-                previousBatchIdsList.innerHTML = '<p class="text-slate-500 italic text-sm">No batches registered yet in this session. (Or enable `getAllBatchIds` in contract)</p>';
-                // previousBatchIdsSection.classList.add('hidden'); // Keep section visible with the message
-                 previousBatchIdsSection.classList.remove('hidden'); // Ensure it's visible
+                previousBatchIdsList.innerHTML = '<p class="text-slate-500 italic text-sm">No Batch IDs found on the blockchain for this contract.</p>';
             }
         }
 
-
-        // Register a new batch
         async function registerNewBatch() {
             if (!contract) {
                 showMessage('Please connect your wallet first.', 'error');
@@ -575,11 +575,8 @@
                 await tx.wait();
                 showMessage(`Batch "${batchId}" registered successfully! Tx: ${tx.hash.substring(0,10)}...`, 'success');
 
-                // Add to local list for demo purposes and update display
-                if (!localBatchIds.includes(batchId)) {
-                    localBatchIds.push(batchId);
-                    updatePreviousBatchIdsList();
-                }
+                // Refresh the list of all batch IDs from the blockchain
+                await loadAndDisplayAllBatchIds();
 
                 batchIdInput.value = '';
                 locationInput.value = '';
@@ -589,14 +586,13 @@
             }
         }
 
-        // Add a tracking update
         async function addBatchUpdate() {
             if (!contract) {
                 showMessage('Please connect your wallet first.', 'error');
                 return;
             }
-            const batchId = batchIdInput.value.trim();
-            const newLocation = locationInput.value.trim();
+            const batchId = batchIdInput.value.trim(); // Use the same input for batch ID
+            const newLocation = locationInput.value.trim(); // Use the same input for location
 
             if (!batchId || !newLocation) {
                 showMessage('Batch ID and New Location are required for an update.', 'error');
@@ -615,7 +611,6 @@
             }
         }
 
-        // View batch history
         async function viewHistory() {
             const batchId = viewBatchIdInput.value.trim();
             if (!batchId) {
@@ -625,16 +620,13 @@
             }
 
             historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
-            historyDisplayCard.classList.remove('hidden'); // Ensure history card is visible
+            historyDisplayCard.classList.remove('hidden');
 
-            let currentContract = contract; // Use signed contract if available
+            let currentContract = contract;
 
             if (!currentContract) {
-                // Fallback to a read-only provider if wallet not connected but user wants to view public data
                 try {
-                    // IMPORTANT: Replace 'YOUR_INFURA_PROJECT_ID' with your actual Infura Project ID or another RPC URL
-                    // For public Sepolia RPC, you can use: https://rpc.sepolia.org or https://ethereum-sepolia-rpc.publicnode.com
-                    const readProvider = new ethers.providers.JsonRpcProvider('https://rpc.sepolia.org'); // Public Sepolia RPC
+                    const readProvider = new ethers.providers.JsonRpcProvider('https://rpc.sepolia.org');
                     currentContract = new ethers.Contract(contractAddress, JSON.parse(contractABI), readProvider);
                     showMessage('Fetching history using a public node (read-only). Connect wallet to make transactions.', 'info', 3000);
                 } catch (e) {
@@ -644,7 +636,6 @@
                     return;
                 }
             }
-
 
             try {
                 const history = await currentContract.getBatchHistory(batchId);
@@ -680,7 +671,6 @@
         window.addEventListener('load', async () => {
             if (window.ethereum && window.ethereum.selectedAddress) {
                 connectionStatus.textContent = 'MetaMask detected. Previously connected. Click to re-connect.';
-                // Optionally, you could try to auto-connect here, but manual click is often better UX.
             } else if (window.ethereum) {
                  connectionStatus.textContent = 'MetaMask detected. Click "Connect Wallet" to begin.';
             } else {
@@ -688,12 +678,12 @@
                 connectButton.disabled = true;
                 connectButton.classList.add('opacity-50', 'cursor-not-allowed');
             }
-            // Initially, the history display card can be hidden until a lookup is performed or wallet connected.
-            // historyDisplayCard.classList.add('hidden');
-            // No, let's make it visible but with a placeholder message if actions/lookup are hidden
-            if (actionsCard.classList.contains('hidden')) { // if not connected
+            if (actionsCard.classList.contains('hidden')) {
                  historyDisplayCard.classList.add('hidden');
             }
+            // Attempt to load batch IDs on page load using a read-only provider if wallet not connected yet
+            // This allows users to see the list even before connecting their wallet for interaction.
+            await loadAndDisplayAllBatchIds();
         });
 
     </script>
