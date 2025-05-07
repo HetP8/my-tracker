@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethical Supply Chain Tracker PoC</title>
+    <title>Ethical22 Supply Chain Tracker PoC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -144,9 +144,27 @@
     <script>
         // --- Configuration ---
         // IMPORTANT: Replace with your deployed contract address
-        const contractAddress = '0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8'; // PASTE YOUR DEPLOYED TrackerV2.sol CONTRACT ADDRESS
+        const contractAddress = '0xf8e81D47203A594245E36C48e151709F0C19fBe8'; // PASTE YOUR DEPLOYED TrackerV2.sol CONTRACT ADDRESS
         // IMPORTANT: Ensure this ABI matches your deployed TrackerV2.sol, including the getAllBatchIds function
         const contractABI = `[
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_batchId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_newLocation",
+				"type": "string"
+			}
+		],
+		"name": "addTrackingUpdate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
 	{
 		"anonymous": false,
 		"inputs": [
@@ -218,32 +236,13 @@
 			},
 			{
 				"internalType": "string",
-				"name": "_newLocation",
+				"name": "_initialLocation",
 				"type": "string"
 			}
 		],
-		"name": "addTrackingUpdate",
+		"name": "registerBatch",
 		"outputs": [],
 		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "allBatchIds",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -346,24 +345,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_initialLocation",
-				"type": "string"
-			}
-		],
-		"name": "registerBatch",
-		"outputs": [],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]`;
