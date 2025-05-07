@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced34 Blockchain Tracker PoC</title>
+    <title>Enhanced35 Blockchain Tracker PoC</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
@@ -142,228 +142,231 @@
 
     <script>
         // --- Configuration ---
-        const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; // This is from your file, ensure it's correct
+        // Make sure this is your correct deployed TrackerV2 contract address
+        const contractAddress = '0xd9145CCE52D386f254917e481eB44e9943F39138'; 
+        
+        // ABI provided by you, formatted carefully
         const contractABI = \`[
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_newLocation",
-				"type": "string"
-			}
-		],
-		"name": "addTrackingUpdate",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "batchId",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "newLocation",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "updatedBy",
-				"type": "address"
-			}
-		],
-		"name": "BatchLocationUpdated",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "string",
-				"name": "batchId",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "string",
-				"name": "initialLocation",
-				"type": "string"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "registeredBy",
-				"type": "address"
-			}
-		],
-		"name": "BatchRegistered",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_initialLocation",
-				"type": "string"
-			}
-		],
-		"name": "registerBatch",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "allBatchIds",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"name": "batchHistory",
-		"outputs": [
-			{
-				"internalType": "string",
-				"name": "location",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "timestamp",
-				"type": "uint256"
-			},
-			{
-				"internalType": "address",
-				"name": "actor",
-				"type": "address"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "getAllBatchIds",
-		"outputs": [
-			{
-				"internalType": "string[]",
-				"name": "",
-				"type": "string[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			}
-		],
-		"name": "getBatchHistory",
-		"outputs": [
-			{
-				"components": [
-					{
-						"internalType": "string",
-						"name": "location",
-						"type": "string"
-					},
-					{
-						"internalType": "uint256",
-						"name": "timestamp",
-						"type": "uint256"
-					},
-					{
-						"internalType": "address",
-						"name": "actor",
-						"type": "address"
-					}
-				],
-				"internalType": "struct TrackerV2.TrackingEvent[]",
-				"name": "",
-				"type": "tuple[]"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_batchId",
-				"type": "string"
-			}
-		],
-		"name": "getHistoryCount",
-		"outputs": [
-			{
-				"internalType": "uint256",
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	}
-]\`; // This is from your file, ensure it's correct
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_batchId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_newLocation",
+                "type": "string"
+            }
+        ],
+        "name": "addTrackingUpdate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "string",
+                "name": "batchId",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "newLocation",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "updatedBy",
+                "type": "address"
+            }
+        ],
+        "name": "BatchLocationUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "string",
+                "name": "batchId",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "initialLocation",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "address",
+                "name": "registeredBy",
+                "type": "address"
+            }
+        ],
+        "name": "BatchRegistered",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_batchId",
+                "type": "string"
+            },
+            {
+                "internalType": "string",
+                "name": "_initialLocation",
+                "type": "string"
+            }
+        ],
+        "name": "registerBatch",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "allBatchIds",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "batchHistory",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "location",
+                "type": "string"
+            },
+            {
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "internalType": "address",
+                "name": "actor",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getAllBatchIds",
+        "outputs": [
+            {
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_batchId",
+                "type": "string"
+            }
+        ],
+        "name": "getBatchHistory",
+        "outputs": [
+            {
+                "components": [
+                    {
+                        "internalType": "string",
+                        "name": "location",
+                        "type": "string"
+                    },
+                    {
+                        "internalType": "uint256",
+                        "name": "timestamp",
+                        "type": "uint256"
+                    },
+                    {
+                        "internalType": "address",
+                        "name": "actor",
+                        "type": "address"
+                    }
+                ],
+                "internalType": "struct TrackerV2.TrackingEvent[]",
+                "name": "",
+                "type": "tuple[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_batchId",
+                "type": "string"
+            }
+        ],
+        "name": "getHistoryCount",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]\`;
 
         // --- Global Variables ---
         let provider;
@@ -372,6 +375,7 @@
         let userAccount;
 
         // --- DOM Elements ---
+        // These are defined globally, ensure they are correctly fetched after DOM load if issues persist
         const connectButton = document.getElementById('connectButton');
         const connectionStatus = document.getElementById('connectionStatus');
         const mainAppInterface = document.getElementById('mainAppInterface');
@@ -387,7 +391,7 @@
         const historyOutput = document.getElementById('historyOutput');
         const messageBox = document.getElementById('messageBox');
 
-        // --- Functions --- (showMessage, connectWallet, handleAccountsChanged, handleChainChanged, resetUI, registerNewBatch, addBatchUpdate, fetchAllBatchIds, displayAllBatchIds, viewHistory - these should all be the same as the previous correct version)
+        // --- Functions ---
 
         function showMessage(text, type = 'info', duration = 5000) {
             messageBox.textContent = text;
@@ -406,21 +410,17 @@
         }
 
         async function connectWallet() {
-            // Check if the button is already disabled (e.g. from a previous failed attempt or if already connected)
-            // This check was slightly different in the uploaded file, ensure it matches this logic
             if (connectButton.disabled && connectButton.textContent === 'Wallet Connected') {
                  console.log("Wallet already connected and initialized.");
-                 return; // Already connected
+                 return; 
             }
             if (connectButton.disabled && connectButton.textContent !== 'Wallet Connected') {
                  console.log("Connect button is disabled, likely due to MetaMask not being detected initially.");
-                 // Optionally, re-check for MetaMask here if desired, or rely on user refresh
                  if (typeof window.ethereum === 'undefined') {
                     showMessage('MetaMask not detected. Please install MetaMask and refresh.', 'error');
                     return;
                  }
             }
-
 
             if (typeof window.ethereum !== 'undefined') {
                 try {
@@ -429,25 +429,31 @@
                     
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
-                    // Ensure ABI is parsed correctly
+                    
                     let parsedABI;
                     try {
                         parsedABI = JSON.parse(contractABI);
                     } catch (e) {
                         console.error("Failed to parse Contract ABI:", e);
                         showMessage("Critical Error: Contract ABI is invalid. Check console.", "error");
+                        // Disable buttons or provide clear user feedback
+                        if(connectButton) connectButton.disabled = true;
                         return;
                     }
                     contract = new ethers.Contract(contractAddress, parsedABI, signer);
                     
-                    connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
-                    connectButton.textContent = 'Wallet Connected';
-                    connectButton.disabled = true;
-                    connectButton.classList.remove('btn-primary');
-                    connectButton.classList.add('btn-disabled');
+                    if (connectionStatus) connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
+                    if (connectButton) {
+                        connectButton.textContent = 'Wallet Connected';
+                        connectButton.disabled = true;
+                        connectButton.classList.remove('btn-primary');
+                        connectButton.classList.add('btn-disabled');
+                    }
                     
-                    document.getElementById('connectCard').classList.add('hidden');
-                    mainAppInterface.classList.remove('hidden');
+                    const connectCard = document.getElementById('connectCard');
+                    if (connectCard) connectCard.classList.add('hidden');
+                    if (mainAppInterface) mainAppInterface.classList.remove('hidden');
+                    
                     showMessage('Wallet connected successfully!', 'success');
 
                     await fetchAllBatchIds(); 
@@ -457,15 +463,17 @@
 
                 } catch (error) {
                     console.error("User denied account access or error during connectWallet:", error);
-                    connectionStatus.textContent = 'Connection failed. Please try again.';
+                    if (connectionStatus) connectionStatus.textContent = 'Connection failed. Please try again.';
                     showMessage(\`Connection Error: \${error.message || 'User denied access.'}\`, 'error');
                 }
             } else {
-                connectionStatus.textContent = 'MetaMask is not installed. Please install it to use this app.';
+                if (connectionStatus) connectionStatus.textContent = 'MetaMask is not installed. Please install it to use this app.';
                 showMessage('MetaMask not detected. Please install MetaMask and refresh.', 'error');
-                connectButton.disabled = true; 
-                connectButton.classList.remove('btn-primary');
-                connectButton.classList.add('btn-disabled');
+                if (connectButton) {
+                    connectButton.disabled = true; 
+                    connectButton.classList.remove('btn-primary');
+                    connectButton.classList.add('btn-disabled');
+                }
             }
         }
 
@@ -475,10 +483,9 @@
                 resetUI();
             } else {
                 userAccount = accounts[0];
-                connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
+                if (connectionStatus) connectionStatus.innerHTML = \`Connected: <span class="font-semibold">\${userAccount.substring(0, 6)}...\${userAccount.substring(userAccount.length - 4)}</span> on Sepolia\`;
                 if (provider) {
                     signer = provider.getSigner();
-                    // Ensure ABI is parsed correctly
                     let parsedABI;
                     try {
                         parsedABI = JSON.parse(contractABI);
@@ -500,13 +507,17 @@
         }
         
         function resetUI() {
-            connectButton.textContent = 'Connect to MetaMask';
-            connectButton.disabled = false;
-            connectButton.classList.add('btn-primary');
-            connectButton.classList.remove('btn-disabled');
-            connectionStatus.textContent = 'Please connect to the Sepolia Testnet.';
-            mainAppInterface.classList.add('hidden');
-            document.getElementById('connectCard').classList.remove('hidden');
+            if (connectButton) {
+                connectButton.textContent = 'Connect to MetaMask';
+                connectButton.disabled = false;
+                connectButton.classList.add('btn-primary');
+                connectButton.classList.remove('btn-disabled');
+            }
+            if (connectionStatus) connectionStatus.textContent = 'Please connect to the Sepolia Testnet.';
+            if (mainAppInterface) mainAppInterface.classList.add('hidden');
+            const connectCard = document.getElementById('connectCard');
+            if (connectCard) connectCard.classList.remove('hidden');
+            
             userAccount = null;
             provider = null;
             signer = null;
@@ -515,20 +526,22 @@
 
         async function registerNewBatch() {
             if (!contract) { showMessage('Please connect your wallet first.', 'error'); return; }
-            const batchId = batchIdInput.value.trim();
-            const initialLocation = locationInput.value.trim();
+            const currentBatchId = batchIdInput ? batchIdInput.value.trim() : "";
+            const currentInitialLocation = locationInput ? locationInput.value.trim() : "";
 
-            if (!batchId || !initialLocation) { showMessage('Batch ID and Initial Location are required.', 'error'); return; }
+            if (!currentBatchId || !currentInitialLocation) { showMessage('Batch ID and Initial Location are required.', 'error'); return; }
 
-            registerButton.disabled = true;
-            registerButton.textContent = 'Registering...';
+            if (registerButton) {
+                registerButton.disabled = true;
+                registerButton.textContent = 'Registering...';
+            }
             try {
                 showMessage('Sending transaction to register batch...', 'info');
-                const tx = await contract.registerBatch(batchId, initialLocation);
+                const tx = await contract.registerBatch(currentBatchId, currentInitialLocation);
                 await tx.wait();
-                showMessage(\`Batch "\${batchId}" registered successfully! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
-                batchIdInput.value = '';
-                locationInput.value = '';
+                showMessage(\`Batch "\${currentBatchId}" registered successfully! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
+                if (batchIdInput) batchIdInput.value = '';
+                if (locationInput) locationInput.value = '';
                 await fetchAllBatchIds(); 
             } catch (error) {
                 console.error("Error registering batch:", error);
@@ -537,27 +550,31 @@
                 if (errMsg.includes("Batch ID already exists")) errMsg = "This Batch ID has already been registered.";
                 showMessage(\`Error: \${errMsg}\`, 'error');
             } finally {
-                registerButton.disabled = false;
-                registerButton.textContent = 'Register New Batch';
+                if (registerButton) {
+                    registerButton.disabled = false;
+                    registerButton.textContent = 'Register New Batch';
+                }
             }
         }
 
         async function addBatchUpdate() {
             if (!contract) { showMessage('Please connect your wallet first.', 'error'); return; }
-            const batchId = batchIdInput.value.trim();
-            const newLocation = locationInput.value.trim();
+            const currentBatchId = batchIdInput ? batchIdInput.value.trim() : "";
+            const currentNewLocation = locationInput ? locationInput.value.trim() : "";
 
-            if (!batchId || !newLocation) { showMessage('Batch ID and New Location are required for an update.', 'error'); return; }
+            if (!currentBatchId || !currentNewLocation) { showMessage('Batch ID and New Location are required for an update.', 'error'); return; }
             
-            updateButton.disabled = true;
-            updateButton.textContent = 'Updating...';
+            if (updateButton) {
+                updateButton.disabled = true;
+                updateButton.textContent = 'Updating...';
+            }
             try {
                 showMessage('Sending transaction to update batch location...', 'info');
-                const tx = await contract.addTrackingUpdate(batchId, newLocation);
+                const tx = await contract.addTrackingUpdate(currentBatchId, currentNewLocation);
                 await tx.wait();
-                showMessage(\`Location for batch "\${batchId}" updated! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
-                locationInput.value = ''; 
-                if (viewBatchIdInput.value.trim() === batchId) {
+                showMessage(\`Location for batch "\${currentBatchId}" updated! Tx: \${tx.hash.substring(0,10)}...\`, 'success');
+                if (locationInput) locationInput.value = ''; 
+                if (viewBatchIdInput && viewBatchIdInput.value.trim() === currentBatchId) {
                     await viewHistory();
                 }
             } catch (error) {
@@ -567,8 +584,10 @@
                 if (errMsg.includes("Batch ID not found")) errMsg = "Batch ID not found. Register it first.";
                 showMessage(\`Error: \${errMsg}\`, 'error');
             } finally {
-                updateButton.disabled = false;
-                updateButton.textContent = 'Add Tracking Update';
+                if (updateButton) {
+                    updateButton.disabled = false;
+                    updateButton.textContent = 'Add Tracking Update';
+                }
             }
         }
         
@@ -577,35 +596,35 @@
             if (!tempContract) {
                  try {
                     const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
-                    // Ensure ABI is parsed correctly
                     let parsedABI;
                     try {
                         parsedABI = JSON.parse(contractABI);
                     } catch (e) {
                         console.error("Failed to parse Contract ABI during fetchAllBatchIds (read-only):", e);
-                        allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Critical Error: ABI invalid.</p>';
+                        if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Critical Error: ABI invalid.</p>';
                         return;
                     }
                     tempContract = new ethers.Contract(contractAddress, parsedABI, readProvider);
                 } catch(e) {
-                    allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Could not load batch IDs. Connect wallet or check console.</p>';
+                    if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Could not load batch IDs. Connect wallet or check console.</p>';
                     console.error("Error creating read-only provider for fetchAllBatchIds:", e);
                     return;
                 }
             }
 
             try {
-                allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">Loading batch IDs...</p>';
+                if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">Loading batch IDs...</p>';
                 const ids = await tempContract.getAllBatchIds(); 
                 displayAllBatchIds(ids);
             } catch (error) {
                 console.error("Error fetching all batch IDs:", error);
-                allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Failed to load batch IDs. Ensure your wallet is connected to Sepolia.</p>';
+                if (allBatchIdsList) allBatchIdsList.innerHTML = '<p class="text-red-500 italic">Failed to load batch IDs. Ensure your wallet is connected to Sepolia.</p>';
             }
         }
 
         function displayAllBatchIds(ids) {
-            if (!ids || ids.length === 0) { // Added !ids check
+            if (!allBatchIdsList) return; // Element not found
+            if (!ids || ids.length === 0) { 
                 allBatchIdsList.innerHTML = '<p class="text-slate-500 italic">No batches registered yet.</p>';
                 return;
             }
@@ -618,9 +637,10 @@
                 button.textContent = id;
                 button.className = 'batch-id-list-item';
                 button.onclick = () => {
-                    viewBatchIdInput.value = id;
+                    if (viewBatchIdInput) viewBatchIdInput.value = id;
                     viewHistory();
-                    document.getElementById('historyOutput').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const historyOutputEl = document.getElementById('historyOutput');
+                    if (historyOutputEl) historyOutputEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 };
                 li.appendChild(button);
                 ul.appendChild(li);
@@ -630,43 +650,44 @@
 
         async function viewHistory() {
             let currentReaderContract = contract; 
-            let batchIdToView = viewBatchIdInput.value.trim();
+            const currentViewBatchId = viewBatchIdInput ? viewBatchIdInput.value.trim() : "";
 
-            if (!batchIdToView) {
+            if (!currentViewBatchId) {
                 showMessage('Please enter a Batch ID to view its history.', 'error');
                 return;
             }
             
-            historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
+            if (historyOutput) historyOutput.innerHTML = '<p class="text-slate-500 italic">Fetching history...</p>';
 
             if (!currentReaderContract) {
                 try {
                     const readProvider = new ethers.providers.JsonRpcProvider(\`https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID\`); // Replace with your Infura ID
-                    // Ensure ABI is parsed correctly
                     let parsedABI;
                     try {
                         parsedABI = JSON.parse(contractABI);
                     } catch (e) {
                         console.error("Failed to parse Contract ABI during viewHistory (read-only):", e);
-                        historyOutput.innerHTML = '<p class="text-red-500">Critical Error: ABI invalid.</p>';
+                        if (historyOutput) historyOutput.innerHTML = '<p class="text-red-500">Critical Error: ABI invalid.</p>';
                         return;
                     }
                     currentReaderContract = new ethers.Contract(contractAddress, parsedABI, readProvider);
                 } catch (e) {
                     console.error("Error creating read-only provider for viewHistory:", e);
                     showMessage('Cannot view history. Wallet not connected and no fallback provider configured.', 'error');
-                    historyOutput.innerHTML = '<p class="text-red-500">Error: Wallet not connected and no fallback provider.</p>';
+                    if (historyOutput) historyOutput.innerHTML = '<p class="text-red-500">Error: Wallet not connected and no fallback provider.</p>';
                     return;
                 }
             }
 
             try {
-                const history = await currentReaderContract.getBatchHistory(batchIdToView);
+                const history = await currentReaderContract.getBatchHistory(currentViewBatchId);
                 
-                if (!history || history.length === 0) { // Added !history check
-                    historyOutput.innerHTML = \`<p class="text-slate-600 font-semibold">No history found for Batch ID: \${batchIdToView}</p>\`;
+                if (!historyOutput) return; // Element not found
+
+                if (!history || history.length === 0) { 
+                    historyOutput.innerHTML = \`<p class="text-slate-600 font-semibold">No history found for Batch ID: \${currentViewBatchId}</p>\`;
                 } else {
-                    let html = \`<h3 class="text-xl font-semibold text-sky-600 mb-3">History for Batch ID: \${batchIdToView}</h3>\`;
+                    let html = \`<h3 class="text-xl font-semibold text-sky-600 mb-3">History for Batch ID: \${currentViewBatchId}</h3>\`;
                     history.forEach((event, index) => {
                         html += \`
                             <div class="history-item">
@@ -681,32 +702,38 @@
             } catch (error) {
                 console.error("Error viewing history:", error);
                 showMessage(\`Error viewing history: \${error.message || 'Could not fetch data.'}\`, 'error');
-                historyOutput.innerHTML = \`<p class="text-red-500">Error fetching history for "\${batchIdToView}". Ensure Batch ID is correct and registered.</p>\`;
+                if (historyOutput) historyOutput.innerHTML = \`<p class="text-red-500">Error fetching history for "\${currentViewBatchId}". Ensure Batch ID is correct and registered.</p>\`;
             }
         }
 
         // --- Event Listeners ---
-        // Ensure connectButton is not null before adding listener
         if (connectButton) {
             connectButton.addEventListener('click', connectWallet);
         } else {
-            console.error("Connect button not found on page load for event listener attachment.");
+            console.error("DOM Element 'connectButton' not found during initial script execution for event listener attachment.");
         }
-        // Same for other buttons if needed, though less likely to be null if HTML structure is correct
         if (registerButton) registerButton.addEventListener('click', registerNewBatch);
         if (updateButton) updateButton.addEventListener('click', addBatchUpdate);
         if (viewHistoryButton) viewHistoryButton.addEventListener('click', viewHistory);
 
-
-        // ***** THIS IS THE CRITICAL BLOCK TO UPDATE *****
         window.addEventListener('load', () => {
-            // Give MetaMask a brief moment to inject window.ethereum
             setTimeout(() => {
-                const localConnectButton = document.getElementById('connectButton'); // Re-fetch inside timeout
-                const localConnectionStatus = document.getElementById('connectionStatus'); // Re-fetch
+                // It's crucial that DOM elements are fetched *after* they are loaded.
+                // For connectButton and connectionStatus, they are already defined globally.
+                // However, it's safer to ensure they exist before using them if there were any doubts about load order.
+                const localConnectButton = document.getElementById('connectButton');
+                const localConnectionStatus = document.getElementById('connectionStatus');
 
                 if (!localConnectButton || !localConnectionStatus) {
-                    console.error("Connect button or status element not found during load event. HTML might not be fully parsed.");
+                    console.error("Connect button or status element not found during load event. HTML might not be fully parsed or IDs are incorrect.");
+                    // Display a persistent error to the user if critical UI elements are missing
+                    const body = document.querySelector('body');
+                    if (body && !body.querySelector('#critical-error-message')) {
+                        const errorDiv = document.createElement('div');
+                        errorDiv.id = 'critical-error-message';
+                        errorDiv.innerHTML = '<p style="color: red; background: white; padding: 10px; text-align: center; font-weight: bold;">Critical Error: UI elements missing. Please check the HTML structure or contact support.</p>';
+                        body.prepend(errorDiv);
+                    }
                     return; 
                 }
 
@@ -723,16 +750,13 @@
                     localConnectButton.disabled = true; 
                     localConnectButton.classList.remove('btn-primary');
                     localConnectButton.classList.add('btn-disabled');
-                    // Only show error message if it hasn't been shown already for this
                     if (!document.body.dataset.metaMaskErrorShown) {
                         showMessage('MetaMask not detected. Please install it and refresh.', 'error');
                         document.body.dataset.metaMaskErrorShown = "true"; 
                     }
                 }
-            }, 500); // Wait 500ms for MetaMask to inject
+            }, 500); 
         });
-
     </script>
 </body>
 </html>
-
